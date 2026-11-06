@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#070d0b" id="metaTheme">
+<meta name="description" content="Waktu solat (kaedah JAKIM) dan arah kiblat dengan tetapan bearing sijil kiblat. Untuk kegunaan peribadi.">
+<title>Waktu Solat &amp; Kiblat</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Waktu Solat">
+<script>
+(function () {
+  var t = 'dark';
+  try {
+    var saved = JSON.parse(localStorage.getItem('waktu-solat/v1') || '{}');
+    if (saved.theme === 'light' || saved.theme === 'minimal' || saved.theme === 'dark') t = saved.theme;
+  } catch (e) {}
+  document.documentElement.setAttribute('data-theme', t);
+})();
+</script>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+
+<div class="app">
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20.2 15.3A8.5 8.5 0 0 1 8.7 3.8 8.5 8.5 0 1 0 20.2 15.3Z"/>
+          <path d="M18 6.6l.7 1.6 1.6.7-1.6.7-.7 1.6-.7-1.6-1.6-.7 1.6-.7z"/>
+        </svg>
+      </div>
+      <div class="txt">
+        <div class="t1">Waktu Solat</div>
+        <div class="t2" id="locLabel">Menentukan lokasi…</div>
+      </div>
+    </div>
+    <button class="iconbtn" id="btnGps" aria-label="Kemas kini lokasi GPS" title="Lokasi GPS">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3.2"/>
+        <path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3"/>
+        <circle cx="12" cy="12" r="8"/>
+      </svg>
+    </button>
+  </header>
+
+  <main>
+
+    <!-- ================= WAKTU SOLAT ================= -->
+    <section class="view active" id="view-times">
+      <div class="card hero">
+        <div class="hero-top">
+          <div>
+            <div class="eyebrow" id="heroEyebrow">Seterusnya</div>
+            <div class="hero-name" id="nextName">—</div>
+          </div>
+          <div class="hero-time num" id="nextTime">--:--</div>
+        </div>
+        <div class="hero-foot">
+          <div class="countdown num" id="countdown">—</div>
+          <div class="hero-date" id="heroDate"></div>
+        </div>
+      </div>
+
+      <div class="datestrip">
+        <span id="dateMiladi">—</span>
+        <span class="sep"></span>
+        <span class="hij" id="dateHijri">—</span>
+        <span class="sep"></span>
+        <span id="zoneLabel"></span>
+      </div>
+
+      <div class="card prayers" id="prayerList"></div>
+
+      <p class="note" id="calcNote"></p>
+    </section>
+
+    <!-- ================= KIBLAT ================= -->
+    <section class="view" id="view-qibla">
+      <div class="qibla-head">
+        <div class="qibla-big num" id="qiblaBig">—</div>
+        <div class="qibla-cap" id="qiblaCap">Arah kiblat dari lokasi anda</div>
+      </div>
+
+      <div class="compass-wrap" id="compassWrap">
+        <div class="compass-index" aria-hidden="true"></div>
+        <svg class="compass" viewBox="0 0 320 320" role="img" aria-label="Kompas arah kiblat">
+          <defs>
+            <radialGradient id="dialBg" cx="50%" cy="34%" r="72%">
+              <stop offset="0%" stop-color="#172a24"/>
+              <stop offset="62%" stop-color="#0f1c18"/>
+              <stop offset="100%" stop-color="#0a1310"/>
+            </radialGradient>
+            <linearGradient id="kaabaGold" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#f0d399"/>
+              <stop offset="100%" stop-color="#c99f52"/>
+            </linearGradient>
+          </defs>
+          <circle cx="160" cy="160" r="152" class="dial-face" fill="url(#dialBg)" stroke="var(--dial-ring)"/>
+          <circle cx="160" cy="160" r="131" class="dial-inner" fill="none" stroke="var(--dial-ring2)"/>
+          <g id="dial"></g>
+          <circle cx="160" cy="160" r="5.5" class="dial-center" fill="var(--accent)"/>
+          <circle cx="160" cy="160" r="11" class="dial-center-ring" fill="none" stroke="var(--accent-line)"/>
+        </svg>
+      </div>
+
+      <div class="compass-state" id="compassState">
+        <span class="led"></span><span id="compassStateText">Menyemak sensor kompas…</span>
+      </div>
+      <button class="btn primary compass-btn" id="btnCompass" hidden>Aktifkan kompas</button>
+
+      <div class="qibla-stats">
+        <div class="qstat">
+          <div class="k">Jarak ke Kaabah</div>
+          <div class="v num" id="qDist">—</div>
+        </div>
+        <div class="qstat wide">
+          <div class="k">Beza dengan telefon</div>
+          <div class="v num" id="qDelta">—</div>
+        </div>
+      </div>
+
+      <div class="seg" id="qiblaMode">
+        <button data-mode="auto" class="on">Auto (GPS)</button>
+        <button data-mode="manual">Manual (sijil)</button>
+      </div>
+
+      <div class="bearing-input" id="bearingBox" hidden>
+        <div class="grp">
+          <div>
+            <label for="qDeg">Darjah</label>
+            <input id="qDeg" type="number" inputmode="numeric" min="0" max="359" step="1" value="292">
+          </div>
+          <span class="unit">°</span>
+        </div>
+        <div class="grp mins">
+          <div>
+            <label for="qMin">Minit</label>
+            <input id="qMin" type="number" inputmode="numeric" min="0" max="59" step="1" value="30">
+          </div>
+          <span class="unit">′</span>
+        </div>
+        <div class="hint">Ikut nilai pada<br>sijil kiblat</div>
+      </div>
+
+      <p class="note" id="qiblaNote"></p>
+    </section>
+
+    <!-- ================= TETAPAN ================= -->
+    <section class="view" id="view-settings">
+
+      <div class="shead">Lokasi</div>
+      <div class="card scard">
+        <div class="field">
+          <div class="fl">
+            <div class="n">Bandar</div>
+            <div class="d">Pilih untuk tetapkan koordinat pantas</div>
+          </div>
+          <select id="setCity"></select>
+        </div>
+        <div class="field">
+          <div class="fl"><div class="n">Latitud</div></div>
+          <input id="setLat" type="number" step="0.0001" inputmode="decimal">
+          <span class="unit">°N</span>
+        </div>
+        <div class="field">
+          <div class="fl"><div class="n">Longitud</div></div>
+          <input id="setLon" type="number" step="0.0001" inputmode="decimal">
+          <span class="unit">°E</span>
+        </div>
+        <div class="btnrow">
+          <button class="btn primary" id="btnUseGps">Guna GPS</button>
+          <button class="btn ghost" id="btnSaveLoc">Simpan koordinat</button>
+        </div>
+      </div>
+
+      <div class="shead">Pengiraan</div>
+      <div class="card scard">
+        <div class="field">
+          <div class="fl">
+            <div class="n">Kaedah</div>
+            <div class="d" id="methodDesc">JAKIM — Subuh 18°, Isyak 18°</div>
+          </div>
+          <select id="setMethod">
+            <option value="jakim">JAKIM (Malaysia)</option>
+            <option value="mwl">Muslim World League</option>
+            <option value="isna">ISNA (Amerika)</option>
+            <option value="egypt">Mesir</option>
+            <option value="karachi">Karachi</option>
+            <option value="makkah">Umm al-Qura</option>
+            <option value="custom">Tersuai</option>
+          </select>
+        </div>
+        <div class="field" id="rowFajr" hidden>
+          <div class="fl"><div class="n">Sudut Subuh</div></div>
+          <input id="setFajr" type="number" step="0.1" inputmode="decimal">
+          <span class="unit">°</span>
+        </div>
+        <div class="field" id="rowIsha" hidden>
+          <div class="fl"><div class="n">Sudut Isyak</div></div>
+          <input id="setIsha" type="number" step="0.1" inputmode="decimal">
+          <span class="unit">°</span>
+        </div>
+        <div class="field">
+          <div class="fl">
+            <div class="n">Mazhab Asar</div>
+            <div class="d">Shafi'i: bayang = 1× objek</div>
+          </div>
+          <select id="setAsr">
+            <option value="1">Shafi'i</option>
+            <option value="2">Hanafi</option>
+          </select>
+        </div>
+        <div class="field">
+          <div class="fl">
+            <div class="n">Ihtiyat</div>
+            <div class="d">Tambah minit berhati-hati pada waktu solat</div>
+          </div>
+          <input id="setIhtiyat" type="number" min="0" max="10" step="1" inputmode="numeric">
+          <span class="unit">min</span>
+        </div>
+      </div>
+
+      <div class="shead">Pelarasan ikut waktu</div>
+      <div class="card scard" id="adjCard"></div>
+
+      <div class="shead">Kiblat</div>
+      <div class="card scard">
+        <div class="field">
+          <div class="fl">
+            <div class="n">Mod bearing</div>
+            <div class="d">Manual = guna nilai pada sijil kiblat</div>
+          </div>
+          <select id="setQiblaMode">
+            <option value="auto">Auto (GPS)</option>
+            <option value="manual">Manual (sijil)</option>
+          </select>
+        </div>
+        <div class="field">
+          <div class="fl">
+            <div class="n">Bearing sijil</div>
+            <div class="d">Contoh: 292° 30′</div>
+          </div>
+          <input id="setQBearing" type="number" step="1" min="0" max="359.999" inputmode="decimal">
+          <span class="unit">°</span>
+        </div>
+        <div class="field">
+          <div class="fl">
+            <div class="n">Offset kompas</div>
+            <div class="d">Betulkan jika anak panah tersasar</div>
+          </div>
+          <input id="setQOffset" type="number" step="0.5" min="-20" max="20" inputmode="decimal">
+          <span class="unit">°</span>
+        </div>
+      </div>
+
+      <div class="shead">Paparan</div>
+      <div class="card scard">
+        <div class="field">
+          <div class="fl">
+            <div class="n">Tema</div>
+            <div class="d">Terang · Minimalis · Gelap</div>
+          </div>
+        </div>
+        <div class="theme-pick" id="themePick">
+          <button type="button" data-theme="light"><span class="sw sw-light"></span>Terang</button>
+          <button type="button" data-theme="minimal"><span class="sw sw-minimal"></span>Minimalis</button>
+          <button type="button" data-theme="dark"><span class="sw sw-dark"></span>Gelap</button>
+        </div>
+        <div class="field">
+          <div class="fl">
+            <div class="n">Zon waktu</div>
+            <div class="d">Ikut peranti atau tetapkan sendiri</div>
+          </div>
+          <select id="setTzMode">
+            <option value="device">Ikut peranti</option>
+            <option value="manual">Tetap</option>
+          </select>
+        </div>
+        <div class="field" id="rowTz" hidden>
+          <div class="fl"><div class="n">UTC</div></div>
+          <input id="setTz" type="number" step="0.5" min="-12" max="14" inputmode="decimal">
+          <span class="unit">j</span>
+        </div>
+        <div class="field">
+          <div class="fl">
+            <div class="n">Hijri</div>
+            <div class="d">Takwim JAKIM (Imkanur Rukyah)</div>
+          </div>
+          <select id="setHijri">
+            <option value="-1">−1 hari</option>
+            <option value="0">Ikut takwim</option>
+            <option value="1">+1 hari</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="shead">Lain-lain</div>
+      <div class="card scard">
+        <div class="btnrow" id="installRow" hidden>
+          <button class="btn primary" id="btnInstall">Pasang di Android</button>
+        </div>
+        <div class="btnrow">
+          <button class="btn danger" id="btnReset">Set semula semua tetapan</button>
+        </div>
+        <div class="credit">
+          <div>© 2026 <b>Rashid Zainol</b></div>
+          <a href="https://github.com/rashidzainol" target="_blank" rel="noopener noreferrer">github.com/rashidzainol</a>
+        </div>
+      </div>
+
+      <p class="note" style="margin-top:18px">
+        Waktu dikira secara astronomi pada peranti anda (tiada internet diperlukan).
+        Jadual takwim rasmi JAKIM boleh berbeza ±1–2 minit kerana pembundaran dan
+        koordinat rujukan. Gunakan <b>Pelarasan ikut waktu</b> untuk memadankan
+        dengan surau atau zon anda.
+      </p>
+    </section>
+
+  </main>
+
+  <nav class="tabbar">
+    <div class="inner">
+      <button class="tab on" data-view="times">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 1.8"/>
+        </svg>
+        <span>Waktu</span>
+      </button>
+      <button class="tab" data-view="qibla">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="9"/><path d="M15.4 8.6l-2.2 4.6-4.6 2.2 2.2-4.6z"/>
+        </svg>
+        <span>Kiblat</span>
+      </button>
+      <button class="tab" data-view="settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>
+        </svg>
+        <span>Tetapan</span>
+      </button>
+    </div>
+  </nav>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="js/core.js"></script>
+<script src="js/compass.js"></script>
+<script src="js/ui.js"></script>
+</body>
+</html>
