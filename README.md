@@ -71,6 +71,23 @@ JAKIM (e-Solat) dan dipaparkan **bulat-bulat** seperti diterbitkan:
 
 ---
 
+## Kemas kini app (APK)
+
+App boleh **kemas kini dirinya sendiri** apabila anda terbitkan versi baharu
+di GitHub:
+
+1. Ubah kod, tambah `versionCode` / `versionName` di
+   `android/app/build.gradle.kts`, push ke `main`.
+2. GitHub Actions bina APK dan terbit release `v<versionName>` automatik.
+3. Dalam app: **Tetapan → Kemas kini App → Semak kemas kini**.
+4. App semak GitHub Releases, muat turun APK, dan buka pemasang Android
+   (benarkan "Pasang app tidak diketahui" sekali sahaja).
+
+Untuk **PWA** (pelayar), kemas kini berlaku melalui service worker secara
+automatik; butang **Kemas kini sekarang** memaksa semakan + muat semula.
+
+---
+
 ## Takwim Hijri
 
 Kalendar Hijri dalam apl ini **bukan** anggaran Umm al-Qura. Ia menggunakan

@@ -13,8 +13,8 @@ android {
         applicationId = "my.rashidzainol.waktusolat"
         minSdk = 24
         targetSdk = 34
-        versionCode = 5
-        versionName = "1.4"
+        versionCode = 6
+        versionName = "1.5"
     }
 
     buildTypes {
@@ -58,4 +58,5 @@ tasks.named("preBuild").configure {
 
 dependencies {
     implementation("androidx.webkit:webkit:1.11.0")
+    implementation("androidx.core:core:1.13.1")
 }

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Laluan fail yang boleh dikongsi melalui FileProvider (APK kemas kini). -->
+<paths>
+    <external-files-path
+        name="update"
+        path="update/" />
+    <files-path
+        name="update_internal"
+        path="update/" />
+</paths>

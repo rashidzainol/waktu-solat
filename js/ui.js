@@ -915,6 +915,12 @@
       toast('Tetapan diset semula');
     });
 
+    // ---- kemas kini app
+    $('btnCheckUpdate').addEventListener('click', function () {
+      checkUpdate(true);
+    });
+    $('btnDoUpdate').addEventListener('click', doUpdate);
+
     // ---- qibla page controls
     Array.prototype.forEach.call($('qiblaMode').children, function (b) {
       b.addEventListener('click', function () {
@@ -952,6 +958,144 @@
     });
   }
 
+  /* ------------------------------------------------------ kemas kini app */
+
+  // Keputusan semakan terkini: {version, url} atau null.
+  var remoteUpdate = null;
+  var updateBusy = false;
+
+  function localVersion() {
+    try {
+      if (window.AndroidUpdate && window.AndroidUpdate.currentVersion) {
+        return String(window.AndroidUpdate.currentVersion());
+      }
+    } catch (e) {}
+    return null; // pelayar/PWA — tiada versi APK
+  }
+
+  function cmpVer(a, b) {
+    var pa = String(a || '').split('.').map(function (x) { return parseInt(x, 10) || 0; });
+    var pb = String(b || '').split('.').map(function (x) { return parseInt(x, 10) || 0; });
+    var n = Math.max(pa.length, pb.length);
+    for (var i = 0; i < n; i++) {
+      var d = (pa[i] || 0) - (pb[i] || 0);
+      if (d !== 0) return d;
+    }
+    return 0;
+  }
+
+  function setUpdateStatus(text) {
+    var el = $('updateStatus');
+    if (el) el.textContent = text;
+  }
+
+  function checkUpdate(verbose) {
+    if (updateBusy) { if (verbose) toast('Muat turun sedang berjalan'); return; }
+    if (verbose) setUpdateStatus('Menyemak…');
+
+    fetch('https://api.github.com/repos/rashidzainol/waktu-solat/releases/latest')
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function (rel) {
+        var ver = rel && rel.tag_name ? String(rel.tag_name).replace(/^v/, '') : '';
+        var asset = null;
+        (rel.assets || []).forEach(function (a) {
+          if (/\.apk$/i.test(a.name)) asset = a;
+        });
+
+        var local = localVersion();
+        if (!local) {
+          // Pelayar/PWA: kemas kini melalui service worker.
+          remoteUpdate = null;
+          setUpdateStatus('PWA — kemas kini automatik dari web. Versi GitHub: v' + ver);
+          if (verbose) toast('App web dikemas kini secara automatik');
+          return;
+        }
+
+        if (!ver) {
+          remoteUpdate = null;
+          setUpdateStatus('Tidak dapat baca versi GitHub.');
+          return;
+        }
+
+        if (cmpVer(ver, local) > 0) {
+          remoteUpdate = { version: ver, url: asset ? asset.browser_download_url : null };
+          setUpdateStatus('Versi baharu v' + ver + ' tersedia (versi anda v' + local + ')');
+          $('btnDoUpdate').hidden = !remoteUpdate.url;
+          if (!remoteUpdate.url) setUpdateStatus('Versi baharu v' + ver + ' tersedia — buka GitHub untuk muat turun');
+          if (verbose) toast('Versi baharu v' + ver + ' tersedia');
+        } else {
+          remoteUpdate = null;
+          $('btnDoUpdate').hidden = true;
+          setUpdateStatus('App terkini — v' + local);
+          if (verbose) toast('App sudah terkini');
+        }
+      })
+      .catch(function (err) {
+        remoteUpdate = null;
+        if (verbose) {
+          setUpdateStatus('Gagal semak kemas kini — semak internet.');
+          toast('Gagal semak kemas kini', 4200);
+        } else {
+          setUpdateStatus('Versi app');
+        }
+      });
+  }
+
+  function doUpdate() {
+    var local = localVersion();
+
+    // PWA: kemas kini service worker + reload.
+    if (!local) {
+      if (!isSecure() || !('serviceWorker' in navigator)) {
+        toast('Muat semula halaman untuk kemas kini');
+        return;
+      }
+      setUpdateStatus('Memuat kemas kini web…');
+      navigator.serviceWorker.getRegistrations().then(function (regs) {
+        var p = Promise.all(regs.map(function (r) { return r.update(); }));
+        return p.catch(function () {});
+      }).then(function () {
+        setUpdateStatus('Kemas kini web siap — muat semula…');
+        setTimeout(function () { location.reload(); }, 600);
+      });
+      return;
+    }
+
+    // APK: muat turun & pasang melalui AndroidUpdate.
+    if (!remoteUpdate || !remoteUpdate.url) { checkUpdate(true); return; }
+    if (updateBusy) return;
+    updateBusy = true;
+    $('btnDoUpdate').disabled = true;
+    setUpdateStatus('Memuat turun v' + remoteUpdate.version + '… 0%');
+
+    window.__updateProgress = function (pct) {
+      setUpdateStatus('Memuat turun v' + (remoteUpdate ? remoteUpdate.version : '') + '… ' + pct + '%');
+    };
+    window.__updateDone = function (ok) {
+      updateBusy = false;
+      $('btnDoUpdate').disabled = false;
+      if (ok) {
+        setUpdateStatus('Pemasangan dimulakan — ikut arahan Android.');
+        toast('Sila benarkan pemasangan apabila Android bertanya', 6000);
+      }
+    };
+    window.__updateError = function (msg) {
+      setUpdateStatus('Gagal: ' + msg);
+      toast('Muat turun gagal', 4200);
+    };
+
+    try {
+      window.AndroidUpdate.downloadAndInstall(remoteUpdate.url);
+    } catch (e) {
+      updateBusy = false;
+      $('btnDoUpdate').disabled = false;
+      setUpdateStatus('Gagal memulakan muat turun.');
+    }
+  }
+
   function init() {
     var hadSave = false;
     try { hadSave = !!localStorage.getItem('waktu-solat/v2') || !!localStorage.getItem('waktu-solat/v1'); } catch (e) {}
@@ -972,6 +1116,9 @@
     syncSettings();
     wire();
 
+    var lv = localVersion();
+    if (lv) setUpdateStatus('Versi ' + lv + ' — menyemak…');
+
     lastDateStr = new Date().toDateString();
     var startView = C.state.autoClock ? 'clock' : 'times';
     showView(startView);
@@ -985,6 +1132,9 @@
     if ('serviceWorker' in navigator && isSecure()) {
       navigator.serviceWorker.register('sw.js').catch(function () {});
     }
+
+    // Semak versi GitHub sekali semasa app dibuka (senyap).
+    setTimeout(function () { checkUpdate(false); }, 4000);
   }
 
   if (document.readyState === 'loading') {

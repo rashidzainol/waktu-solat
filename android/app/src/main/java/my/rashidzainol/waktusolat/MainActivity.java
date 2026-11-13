@@ -46,6 +46,7 @@ public class MainActivity extends Activity {
     private GeolocationPermissions.Callback geoCallback;
     private String geoOrigin;
     private boolean isTv;
+    private UpdateManager updater;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -83,6 +84,8 @@ public class MainActivity extends Activity {
 
         web.addJavascriptInterface(new ThemeBridge(), "AndroidTheme");
         web.addJavascriptInterface(new NotifBridge(), "AndroidNotif");
+        updater = new UpdateManager(this, web);
+        web.addJavascriptInterface(updater.new Bridge(), "AndroidUpdate");
 
         web.setWebViewClient(new WebViewClient() {
             @Override
