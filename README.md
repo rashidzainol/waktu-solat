@@ -247,6 +247,10 @@ Ciri untuk TV:
 
 ## Widget homescreen (telefon & tablet)
 
+> **Pra-tonton:** buka [demo-widget.html](https://rashidzainol.github.io/waktu-solat/demo-widget.html)
+> untuk melihat mock widget 4×2 di homescreen telefon — kira detik hidup dan
+> simulasi notifikasi azan.
+
 Satu APK untuk semua peranti — Android TV, Google TV, telefon dan tablet.
 
 Pada telefon/tablet, **tekan lama pada homescreen → Widgets → Waktu Solat**
