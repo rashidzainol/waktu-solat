@@ -220,6 +220,10 @@ Buka folder `android/` dalam Android Studio, tunggu Gradle sync, kemudian
 
 ## Android TV / Google TV
 
+> **Pra-tonton:** buka [demo-tv.html](https://rashidzainol.github.io/waktu-solat/demo-tv.html)
+> untuk melihat mock paparan Mod Jam di TV — jam hidup, togol gaya, dan
+> simulasi notifikasi azan.
+
 APK yang sama boleh dipasang terus pada Android TV & Google TV:
 
 1. Bina/muat turun APK seperti di atas (`app-debug.apk`).
