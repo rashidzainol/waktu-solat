@@ -308,7 +308,7 @@
     return 2 * R * Math.asin(Math.min(1, Math.sqrt(a)));
   }
 
-  // Bearing yang digunakan: manual (sijil) atau GPS terakhir.
+  // Bearing yang digunakan: manual atau GPS terakhir.
   function activeQiblaBearing() {
     if (state.qiblaMode === 'manual') return wrap360(state.qiblaBearing);
     if (state.gpsLat == null || state.gpsLon == null) return null;

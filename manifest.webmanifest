@@ -2,7 +2,7 @@
   "id": "./",
   "name": "Waktu Solat & Kiblat",
   "short_name": "Waktu Solat",
-  "description": "Waktu solat kaedah JAKIM dan arah kiblat dengan tetapan bearing sijil kiblat.",
+  "description": "Waktu solat data JAKIM dan arah kiblat dengan tetapan bearing kiblat.",
   "lang": "ms",
   "dir": "ltr",
   "start_url": "./index.html",

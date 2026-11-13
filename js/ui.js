@@ -490,7 +490,7 @@
     } else {
       $('qiblaBig').innerHTML = C.fmtDegMin(bearing).replace('°', '°<span>').replace('′', '′</span>');
       $('qiblaCap').textContent = st.qiblaMode === 'manual'
-        ? 'Mengikut bearing sijil kiblat'
+        ? 'Mengikut bearing manual'
         : 'Arah kiblat dari GPS anda';
     }
 
@@ -513,13 +513,13 @@
 
     var note;
     if (st.qiblaMode === 'manual') {
-      note = 'Bearing manual: <b>' + C.fmtDegMin(st.qiblaBearing) + '</b> (dari sijil kiblat).';
+      note = 'Bearing manual: <b>' + C.fmtDegMin(st.qiblaBearing) + '</b>.';
     } else if (bearing == null) {
       note = 'Tekan <b>Guna GPS</b> untuk dapat bearing kiblat lokasi anda, ' +
-             'atau tukar ke <b>Manual</b> dan masukkan nilai sijil kiblat.';
+             'atau tukar ke <b>Manual</b> dan masukkan bearing sendiri.';
     } else {
       note = 'Dikira dari koordinat GPS anda ke Kaabah. Tukar ke <b>Manual</b> ' +
-             'jika sijil kiblat memberi nilai tersendiri.';
+             'jika mahu guna nilai bearing sendiri.';
     }
     $('qiblaNote').innerHTML = note;
 

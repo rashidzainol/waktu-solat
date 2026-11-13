@@ -7,8 +7,8 @@ Apl web (PWA) untuk waktu solat dan arah kiblat — untuk kegunaan peribadi.
 - **60 zon rasmi JAKIM** seluruh Malaysia dibenamkan dalam app (setahun penuh),
   jadi berfungsi **tanpa internet**. Data boleh dikemas kini dalam talian.
 - Masa sentiasa **MYT (UTC+8)** seperti terbitan JAKIM.
-- **Kiblat auto** daripada GPS, dan **kiblat manual** — taip bearing dari sijil
-  kiblat (contoh `292° 30′`). Kompas dengan pembetulan offset.
+- **Kiblat auto** daripada GPS, dan **kiblat manual** — taip bearing sendiri
+  (contoh `292° 30′`). Kompas dengan pembetulan offset.
 - **3 tema**: Gelap, Terang, Minimalis.
 - **APK Android** (WebView offline) untuk telefon, tablet & Android TV melalui
   GitHub Actions, atau dipasang sebagai PWA.
@@ -115,12 +115,12 @@ turut bertukar mengikut tema.
 
 ## Kiblat
 
-**Auto (GPS)** — bearing bulatan besar dari koordinat anda ke Kaabah
+**Auto** — bearing bulatan besar dari koordinat GPS anda ke Kaabah
 (21.4225° N, 39.8262° E). Untuk Kuala Lumpur hasilnya **292° 32′**.
 
-**Manual (sijil)** — masukkan bearing yang tercatat pada sijil kiblat bangunan
-anda. Apl akan menggunakan nilai itu sebagai sasaran kompas, dan memaparkan
-beza dengan kiraan GPS supaya anda boleh semak.
+**Manual** — masukkan sendiri nilai bearing yang anda mahu (contoh dari
+ukuran bangunan). Apl akan menggunakan nilai itu sebagai sasaran kompas,
+dan memaparkan beza dengan kiraan GPS supaya anda boleh semak.
 
 ```
 Bearing manual: 293° 15′
@@ -132,7 +132,7 @@ Kiraan GPS untuk lokasi ini ialah 292° 32′ (beza 0.7°)
 - Pegang telefon **mendatar** (skrin ke atas) dan jauhkan dari besi/elektronik.
 - Kalibrasi dengan gerakan angka-8 jika arah nampak tersasar.
 - Android merujuk **utara magnetik**. Deklinasi magnet di Malaysia < 1°, tetapi
-  jika masih tersasar gunakan **Tetapan → Offset kompas** (−20° … +20°).
+  jika masih tersasar gunakan **Tetapan → Offset** (−20° … +20°).
 - Kompas perlukan sambungan **https://** (atau `localhost`) dan kebenaran sensor.
 
 ---

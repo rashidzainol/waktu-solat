@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="dark light">
 <meta name="theme-color" content="#070d0b" id="metaTheme">
-<meta name="description" content="Waktu solat (kaedah JAKIM) dan arah kiblat dengan tetapan bearing sijil kiblat. Untuk kegunaan peribadi.">
+<meta name="description" content="Waktu solat (data JAKIM) dan arah kiblat dengan tetapan bearing kiblat. Untuk kegunaan peribadi.">
 <title>Waktu Solat &amp; Kiblat</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
@@ -158,8 +158,8 @@
       </div>
 
       <div class="seg" id="qiblaMode">
-        <button data-mode="auto" class="on">Auto (GPS)</button>
-        <button data-mode="manual">Manual (sijil)</button>
+        <button data-mode="auto" class="on">Auto</button>
+        <button data-mode="manual">Manual</button>
       </div>
 
       <div class="btnrow">
@@ -181,7 +181,7 @@
           </div>
           <span class="unit">′</span>
         </div>
-        <div class="hint">Ikut nilai pada<br>sijil kiblat</div>
+        <div class="hint">Contoh:<br>292° 30′</div>
       </div>
 
       <p class="note" id="qiblaNote"></p>
@@ -219,24 +219,24 @@
         <div class="field">
           <div class="fl">
             <div class="n">Mod bearing</div>
-            <div class="d">Manual = guna nilai pada sijil kiblat</div>
+            <div class="d">Auto = GPS · Manual = nilai bearing di atas</div>
           </div>
           <select id="setQiblaMode">
-            <option value="auto">Auto (GPS)</option>
-            <option value="manual">Manual (sijil)</option>
+            <option value="auto">Auto</option>
+            <option value="manual">Manual</option>
           </select>
         </div>
         <div class="field">
           <div class="fl">
-            <div class="n">Bearing sijil</div>
-            <div class="d">Contoh: 292° 30′</div>
+            <div class="n">Bearing manual</div>
+            <div class="d">Guna nilai ini apabila mod Manual</div>
           </div>
           <input id="setQBearing" type="number" step="1" min="0" max="359.999" inputmode="decimal">
           <span class="unit">°</span>
         </div>
         <div class="field">
           <div class="fl">
-            <div class="n">Offset kompas</div>
+            <div class="n">Offset</div>
             <div class="d">Betulkan jika anak panah tersasar</div>
           </div>
           <input id="setQOffset" type="number" step="0.5" min="-20" max="20" inputmode="decimal">
