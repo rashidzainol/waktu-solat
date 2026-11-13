@@ -80,11 +80,12 @@ public class UpdateManager {
                 if (dest.exists()) dest.delete();
 
                 long total = download(url, dest);
+                final File apk = dest;
 
                 // Fail dimuat turun — minta pemasang Android membukanya.
                 ui.post(() -> {
                     try {
-                        install(dest);
+                        install(apk);
                         reportDone(true, null);
                     } catch (Exception e) {
                         reportDone(false, "Tidak boleh buka pemasang: " + e.getMessage());
