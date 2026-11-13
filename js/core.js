@@ -109,6 +109,9 @@
     qiblaMode: 'auto',
     qiblaBearing: 292.5,      // manual bearing from a qibla certificate
     compassOffset: 0,
+    notify: true,             // notifikasi waktu solat (APK Android)
+    autoClock: false,         // buka Mod Jam terus semasa app dibuka
+    clockStyle: 'full',       // 'full' | 'mini' — gaya Mod Jam
     adj: { imsak: 0, fajr: 0, syuruk: 0, dhuha: 0, dhuhr: 0, asr: 0, maghrib: 0, isha: 0 }
   };
 

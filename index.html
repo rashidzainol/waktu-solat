@@ -42,6 +42,13 @@
         <div class="t2" id="locLabel">Menentukan lokasi…</div>
       </div>
     </div>
+    <button class="iconbtn" id="btnClock" aria-label="Mod Jam" title="Mod Jam (paparan TV)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="9"/>
+        <path d="M12 7.5V12l3.5 2"/>
+        <path d="M12 3v2M12 19v2M3 12h2M19 12h2"/>
+      </svg>
+    </button>
     <button class="iconbtn" id="btnGps" aria-label="Kemas kini lokasi GPS" title="Lokasi GPS">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="12" cy="12" r="3.2"/>
@@ -80,6 +87,36 @@
       <div class="card prayers" id="prayerList"></div>
 
       <p class="note" id="calcNote"></p>
+    </section>
+
+    <!-- ================= MOD JAM (TV) ================= -->
+    <section class="view" id="view-clock">
+
+      <div id="clockFull" class="clock-full">
+        <div class="ck-time num" id="ckTime">--:--</div>
+        <div class="ck-date" id="ckDate">-</div>
+
+        <div class="ck-next">
+          <div class="ck-next-l">
+            <div class="eyebrow">Seterusnya</div>
+            <div class="ck-name" id="ckName">-</div>
+          </div>
+          <div class="ck-next-r">
+            <div class="ck-count num" id="ckCount">-</div>
+            <div class="ck-nextat">pada <b class="num" id="ckNextAt">--:--</b></div>
+          </div>
+        </div>
+
+        <div class="ck-grid" id="ckGrid"></div>
+      </div>
+
+      <div id="clockMini" class="clock-mini" hidden>
+        <div class="ckm-time num" id="ckmTime">--:--</div>
+        <div class="ckm-next" id="ckmNext">-</div>
+      </div>
+
+      <p class="note clock-note" id="ckNote"></p>
+      <button class="btn ghost clock-exit" id="btnClockExit">← Kembali ke Waktu Solat</button>
     </section>
 
     <!-- ================= KIBLAT ================= -->
@@ -291,6 +328,26 @@
         </div>
         <div class="field">
           <div class="fl">
+            <div class="n">Gaya jam</div>
+            <div class="d">Paparan Mod Jam di TV</div>
+          </div>
+          <select id="setClockStyle">
+            <option value="full">Lengkap</option>
+            <option value="mini">Minimalis</option>
+          </select>
+        </div>
+        <div class="field">
+          <div class="fl">
+            <div class="n">Buka Mod Jam terus</div>
+            <div class="d">Paparan jam dulu semasa app dibuka (sesuai untuk TV)</div>
+          </div>
+          <select id="setAutoClock">
+            <option value="1">Ya</option>
+            <option value="0">Tidak</option>
+          </select>
+        </div>
+        <div class="field">
+          <div class="fl">
             <div class="n">Hijri</div>
             <div class="d">Takwim JAKIM (Imkanur Rukyah)</div>
           </div>
@@ -298,6 +355,20 @@
             <option value="-1">−1 hari</option>
             <option value="0">Ikut takwim</option>
             <option value="1">+1 hari</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="shead">TV &amp; Notifikasi</div>
+      <div class="card scard">
+        <div class="field">
+          <div class="fl">
+            <div class="n">Notifikasi waktu solat</div>
+            <div class="d">Bunyi &amp; paparan pada setiap waktu solat (APK Android)</div>
+          </div>
+          <select id="setNotify">
+            <option value="1">Hidup</option>
+            <option value="0">Mati</option>
           </select>
         </div>
       </div>
@@ -333,6 +404,12 @@
           <circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 1.8"/>
         </svg>
         <span>Waktu</span>
+      </button>
+      <button class="tab" data-view="clock">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3.5 2"/>
+        </svg>
+        <span>Jam</span>
       </button>
       <button class="tab" data-view="qibla">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">

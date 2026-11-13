@@ -218,6 +218,29 @@ Buka folder `android/` dalam Android Studio, tunggu Gradle sync, kemudian
 
 ---
 
+## Android TV / Google TV
+
+APK yang sama boleh dipasang terus pada Android TV & Google TV:
+
+1. Bina/muat turun APK seperti di atas (`app-debug.apk`).
+2. Pindahkan ke TV — gunakan **Send Files to TV**, **Downloader**, atau USB.
+3. Buka fail APK dengan pelayar fail TV → benarkan *Install unknown apps* → Install.
+4. App muncul di launcher TV (tiada sentuhan diperlukan; guna remote).
+
+Ciri untuk TV:
+
+- **Mod Jam** — paparan jam besar + waktu solat seterusnya + kira detik,
+  sesuai dibiarkan hidup sepanjang hari (skrin tidak akan tidur).
+  Dua gaya: **Lengkap** dan **Minimalis** (Tetapan → Paparan → Gaya jam).
+- **Notifikasi waktu solat** — notifikasi + bunyi pada setiap waktu
+  (Tetapan → TV & Notifikasi). Berterusan selepas reboot.
+- **Navigasi remote** — anak panah untuk gerak fokus, OK untuk pilih,
+  butang Back keluar dari Mod Jam.
+- TV tidak ada GPS — tetapkan lokasi di **Tetapan → Lokasi** (pilih bandar
+  atau masukkan koordinat sendiri). Kompas tidak berfungsi di TV.
+
+---
+
 ## Kredit
 
 © 2026 **Rashid Zainol** · <https://github.com/rashidzainol>

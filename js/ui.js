@@ -25,6 +25,24 @@
   var liveHeading = null;
   var wakeLock = null;
   var gpsBusy = false;
+  var pushedClock = false;
+  var lastDateStr = '';
+  var clockSig = '';
+
+  /* ----------------------------------------------------------- mode TV */
+
+  var IS_TV = false;
+  try {
+    IS_TV = !!(window.AndroidNotif && window.AndroidNotif.isTv && window.AndroidNotif.isTv());
+  } catch (e) {}
+  if (!IS_TV) {
+    // Heuristic: skrin besar landskap tanpa sentuhan (contoh: TV box / PC)
+    try {
+      IS_TV = matchMedia('(min-width:1100px) and (orientation:landscape)').matches &&
+              matchMedia('(hover:hover) and (pointer:fine)').matches &&
+              !('ontouchstart' in window);
+    } catch (e) {}
+  }
 
   /* ------------------------------------------------------------- helpers */
 
@@ -229,6 +247,102 @@
     return sc.next.key + ':' + sc.next.date.getTime();
   }
 
+  /* -------------------------------------------------------------- clock */
+
+  function h12Parts(date) {
+    var p = C.partsOf(date);
+    var h = p.h % 12; if (h === 0) h = 12;
+    return { h: h, m: p.m, ampm: p.h < 12 ? 'AM' : 'PM', p: p };
+  }
+
+  function renderClock(now, force) {
+    var sc = schedule(now);
+    var st = C.state;
+    var mini = st.clockStyle === 'mini';
+
+    var boxF = $('clockFull'), boxM = $('clockMini');
+    if (boxF) boxF.hidden = mini;
+    if (boxM) boxM.hidden = !mini;
+
+    var sig = signature(sc) + '|' + st.clockStyle + '|' +
+              (now.getHours() < 12 ? 'A' : 'P') + '|' + now.toDateString();
+
+    if (mini) {
+      var m = h12Parts(now);
+      var el = $('ckmTime');
+      el.innerHTML = C.pad2(m.h) + ':' + C.pad2(m.m) +
+        '<span class="ckm-sec num">' + C.pad2(m.p.s) + '</span>';
+      var next = C.META[sc.next.key].label + (sc.next.tomorrow ? ' · esok' : '') +
+        ' pukul <b class="num">' + C.fmtTime(sc.next.date) + '</b>';
+      $('ckmNext').innerHTML = next + ' &nbsp;·&nbsp; lagi <b>' + countdownText(sc.next.date.getTime() - now.getTime()) + '</b>';
+      return;
+    }
+
+    if (!force && sig === clockSig) {
+      // kemas kini kira detik sahaja
+      var cnt = $('ckCount');
+      if (cnt) cnt.textContent = countdownText(sc.next.date.getTime() - now.getTime());
+      return;
+    }
+    clockSig = sig;
+
+    var p = h12Parts(now);
+    $('ckTime').innerHTML = C.pad2(p.h) + ':' + C.pad2(p.m) +
+      '<span class="ampm">' + p.ampm + '</span>';
+    var h = hijriText(now);
+    $('ckDate').textContent = DAYS[p.p.wd] + ', ' + p.p.da + ' ' + MONTHS[p.p.mo] +
+      ' ' + p.p.y + (h ? ' · ' + h : '');
+
+    $('ckName').textContent = C.META[sc.next.key].label + (sc.next.tomorrow ? ' · esok' : '');
+    $('ckNextAt').textContent = C.fmtTime(sc.next.date);
+    $('ckCount').textContent = countdownText(sc.next.date.getTime() - now.getTime());
+
+    var grid = $('ckGrid');
+    var frag = document.createDocumentFragment();
+    C.ORDER.forEach(function (key) {
+      var date = sc.times[key];
+      var cell = document.createElement('div');
+      cell.className = 'ck-cell';
+      if (date) {
+        if (sc.next && sc.next.key === key && !sc.next.tomorrow) cell.classList.add('is-next');
+        else if (date < now) cell.classList.add('is-past');
+      }
+      var k = document.createElement('div');
+      k.className = 'k';
+      k.textContent = C.META[key].label;
+      var t = document.createElement('div');
+      t.className = 't';
+      t.textContent = C.fmtTime(date);
+      cell.appendChild(k);
+      cell.appendChild(t);
+      frag.appendChild(cell);
+    });
+    grid.innerHTML = '';
+    grid.appendChild(frag);
+  }
+
+  /* -------------------------------------------------- notifikasi (APK) */
+
+  function pushSchedule() {
+    try {
+      if (!window.AndroidNotif || !window.AndroidNotif.schedule) return;
+      if (!C.state.notify) { window.AndroidNotif.cancel(); return; }
+
+      var now = new Date();
+      var days = [now, nextDay(now)];
+      var events = [];
+      days.forEach(function (day) {
+        var times = C.computeTimes(day);
+        PRAYER_KEYS.forEach(function (k) {
+          if (times[k] && times[k].getTime() > now.getTime() - 60000) {
+            events.push({ key: k, label: C.META[k].label, ms: times[k].getTime() });
+          }
+        });
+      });
+      window.AndroidNotif.schedule(JSON.stringify(events));
+    } catch (e) {}
+  }
+
   function updateCountdown(sc, now) {
     var el = $('cdVal');
     if (!el) return;
@@ -255,6 +369,13 @@
       // keep past/next highlighting in sync once a minute is enough
       if (now.getSeconds() === 0) renderTimes(now);
     }
+    var ds = now.toDateString();
+    if (ds !== lastDateStr) {
+      lastDateStr = ds;
+      renderTimes(now);
+      pushSchedule();
+    }
+    if (currentView === 'clock') renderClock(now);
   }
 
   /* ------------------------------------------------------------- qibla */
@@ -455,6 +576,9 @@
     $('setTzMode').value = st.tzMode;
     $('setTz').value = st.tzOffset;
     $('setHijri').value = String(st.hijriOffset);
+    $('setClockStyle').value = st.clockStyle === 'mini' ? 'mini' : 'full';
+    $('setAutoClock').value = st.autoClock ? '1' : '0';
+    $('setNotify').value = st.notify ? '1' : '0';
 
     toggleMethodRows();
     $('rowTz').hidden = st.tzMode !== 'manual';
@@ -514,13 +638,20 @@
     syncSettings();
     renderTimes(new Date());
     renderQibla();
+    pushSchedule();
   }
 
   /* -------------------------------------------------------------- views */
 
-  function showView(name) {
+  function showView(name, viaPop) {
+    if (name === 'clock') {
+      if (!pushedClock && !viaPop) {
+        try { history.pushState({ vs: 'clock' }, ''); } catch (e) {}
+      }
+      pushedClock = true;
+    }
     currentView = name;
-    ['times', 'qibla', 'settings'].forEach(function (v) {
+    ['times', 'clock', 'qibla', 'settings'].forEach(function (v) {
       $('view-' + v).classList.toggle('active', v === name);
     });
     Array.prototype.forEach.call(document.querySelectorAll('.tab'), function (t) {
@@ -536,7 +667,22 @@
       acquireWake();
     } else {
       window.Compass.stop();
-      releaseWake();
+      if (name !== 'clock') releaseWake();
+    }
+    if (name === 'clock') {
+      renderClock(new Date(), true);
+      acquireWake();
+      try {
+        if (window.AndroidNotif && window.AndroidNotif.keepScreenOn) {
+          window.AndroidNotif.keepScreenOn(true);
+        }
+      } catch (e) {}
+    } else {
+      try {
+        if (window.AndroidNotif && window.AndroidNotif.keepScreenOn) {
+          window.AndroidNotif.keepScreenOn(false);
+        }
+      } catch (e) {}
     }
     if (name === 'settings') syncSettings();
   }
@@ -594,8 +740,88 @@
 
   /* ---------------------------------------------------------------- init */
 
+  /* ---------------------------------------------------------- d-pad nav */
+
+  function dpadItems() {
+    var sel = '#view-' + currentView +
+      ' button:not([hidden]):not([disabled]),' +
+      '#view-' + currentView + ' a,' +
+      '#view-' + currentView + ' select:not([hidden]),' +
+      '#view-' + currentView + ' input:not([hidden]):not([type=hidden]),' +
+      '.topbar button, .tabbar button';
+    return Array.prototype.filter.call(document.querySelectorAll(sel), function (el) {
+      return el.offsetParent !== null || el.closest('.tabbar') || el.closest('.topbar');
+    });
+  }
+
+  function spatialNext(cur, items, dir) {
+    var r1 = cur.getBoundingClientRect();
+    var dx = dir === 'ArrowLeft' ? -1 : dir === 'ArrowRight' ? 1 : 0;
+    var dy = dir === 'ArrowUp' ? -1 : dir === 'ArrowDown' ? 1 : 0;
+    var best = null, bestScore = Infinity;
+    items.forEach(function (el) {
+      if (el === cur) return;
+      var r2 = el.getBoundingClientRect();
+      var c1x = r1.left + r1.width / 2, c1y = r1.top + r1.height / 2;
+      var c2x = r2.left + r2.width / 2, c2y = r2.top + r2.height / 2;
+      var vx = c2x - c1x, vy = c2y - c1y;
+      var forward = vx * dx + vy * dy;
+      if (forward <= 0) return;
+      var cross = Math.abs(vx * dy - vy * dx);
+      var score = forward + cross * 2.5;
+      if (score < bestScore) { bestScore = score; best = el; }
+    });
+    return best;
+  }
+
   function wire() {
     $('btnGps').addEventListener('click', function () { locate(); });
+
+    $('btnClock').addEventListener('click', function () { showView('clock'); });
+    $('btnClockExit').addEventListener('click', function () {
+      if (pushedClock) {
+        try { history.back(); } catch (e) {}
+      } else {
+        showView('times');
+      }
+    });
+
+    // Butang Back remote TV / peranti: dari Mod Jam kembali ke Waktu Solat.
+    window.addEventListener('popstate', function () {
+      if (pushedClock) {
+        pushedClock = false;
+        showView('times', true);
+      }
+    });
+
+    // ---- navigasi D-pad (remote TV)
+    document.addEventListener('keydown', function (e) {
+      var k = e.key;
+      if (k === 'Escape' && currentView === 'clock') {
+        e.preventDefault();
+        if (pushedClock) { try { history.back(); } catch (err) {} }
+        else showView('times');
+        return;
+      }
+      if (k !== 'ArrowUp' && k !== 'ArrowDown' && k !== 'ArrowLeft' && k !== 'ArrowRight') return;
+      var t = e.target;
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA')) return;
+
+      var items = dpadItems();
+      if (!items.length) return;
+      var idx = items.indexOf(document.activeElement);
+      if (idx < 0) {
+        items[0].focus();
+        e.preventDefault();
+        return;
+      }
+      var next = spatialNext(document.activeElement, items, k);
+      if (next) {
+        next.focus();
+        e.preventDefault();
+        if (next.scrollIntoView) next.scrollIntoView({ block: 'nearest' });
+      }
+    });
 
     document.querySelector('.brand').addEventListener('click', function () {
       showView('settings');
@@ -714,6 +940,22 @@
       commit();
     });
 
+    // ---- mod jam & notifikasi
+    $('setClockStyle').addEventListener('change', function () {
+      C.state.clockStyle = this.value === 'mini' ? 'mini' : 'full';
+      commit();
+      if (currentView === 'clock') renderClock(new Date(), true);
+    });
+    $('setAutoClock').addEventListener('change', function () {
+      C.state.autoClock = this.value === '1';
+      commit();
+    });
+    $('setNotify').addEventListener('change', function () {
+      C.state.notify = this.value === '1';
+      commit();
+      toast(C.state.notify ? 'Notifikasi waktu solat dihidupkan' : 'Notifikasi dimatikan');
+    });
+
     // ---- theme
     Array.prototype.forEach.call($('themePick').children, function (b) {
       b.addEventListener('click', function () {
@@ -797,18 +1039,32 @@
     try { hadSave = !!localStorage.getItem('waktu-solat/v1'); } catch (e) {}
 
     C.loadState();
+
+    // Mod TV: pertama kali dibuka pada TV — hidupkan jam & notifikasi.
+    if (IS_TV && !hadSave) {
+      C.state.autoClock = true;
+      C.state.notify = true;
+      C.saveState();
+    }
+
+    if (IS_TV) document.body.classList.add('tv-mode');
+
     applyTheme();
     buildDial();
     buildAdjRows();
     syncSettings();
     wire();
 
+    lastDateStr = new Date().toDateString();
+    var startView = C.state.autoClock ? 'clock' : 'times';
+    showView(startView);
     renderTimes(new Date());
     renderQibla();
     setInterval(tick, 1000);
     tick();
+    pushSchedule();
 
-    if (!hadSave) setTimeout(function () { locate(true); }, 800);
+    if (!hadSave && startView !== 'clock') setTimeout(function () { locate(true); }, 800);
 
     if ('serviceWorker' in navigator && isSecure()) {
       navigator.serviceWorker.register('sw.js').catch(function () {});
