@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mock TV — Waktu Solat untuk Android TV</title>
+<style>
+  :root{
+    --bg:#070d0b;
+    --screen:#070d0b;
+    --surface:#0f1a17;
+    --surface-2:#16241f;
+    --line:rgba(255,255,255,.09);
+    --text:#eaf3ef;
+    --muted:#8ba39a;
+    --accent:#34d399;
+    --accent-dim:rgba(52,211,153,.12);
+    --accent-line:rgba(52,211,153,.42);
+    --gold:#e3c07a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:
+      radial-gradient(1200px 600px at 50% -10%, rgba(52,211,153,.06), transparent 60%),
+      #050908;
+    color:var(--text);
+    font-family:'Segoe UI',system-ui,-apple-system,Roboto,sans-serif;
+    min-height:100dvh;
+    display:flex;flex-direction:column;align-items:center;
+    padding:36px 20px 60px;
+  }
+  h1{font-size:22px;font-weight:700;letter-spacing:.01em}
+  h1 span{color:var(--accent)}
+  .sub{color:var(--muted);font-size:14px;margin:6px 0 26px;text-align:center}
+
+  /* ---- kawalan ---- */
+  .controls{
+    display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:28px;
+  }
+  .controls button{
+    background:var(--surface);color:var(--text);
+    border:1px solid var(--line);border-radius:10px;
+    padding:10px 16px;font-size:14px;cursor:pointer;
+    transition:.15s;
+  }
+  .controls button:hover{background:var(--surface-2)}
+  .controls button.on{border-color:var(--accent-line);background:var(--accent-dim);color:var(--accent)}
+
+  /* ---- bingkai TV ---- */
+  .tv{
+    width:min(920px,94vw);
+    background:linear-gradient(180deg,#1a1d1c,#101312);
+    border:1px solid #2a2f2d;
+    border-radius:22px;
+    padding:14px;
+    box-shadow:0 30px 80px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.06);
+  }
+  .screen{
+    position:relative;
+    aspect-ratio:16/9;
+    container-type:size;
+    background:var(--screen);
+    border-radius:12px;
+    overflow:hidden;
+    box-shadow:inset 0 0 60px rgba(0,0,0,.55);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .led{
+    position:absolute;bottom:6px;right:10px;width:5px;height:5px;border-radius:50%;
+    background:#3a4a44;
+  }
+  .led.on{background:var(--accent);box-shadow:0 0 8px var(--accent)}
+
+  /* ---- kandungan skrin: Mod Jam ---- */
+  .jam{
+    position:absolute;inset:0;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:3.2% 5%;
+    gap:2cqh;
+    text-align:center;
+  }
+  .jam.mini{display:none}
+  .screen.mini .jam.full{display:none}
+  .screen.mini .jam.mini{display:flex}
+
+  .ck-time{
+    font-size:20cqh;
+    font-weight:200;
+    line-height:1;
+    font-variant-numeric:tabular-nums;
+    letter-spacing:.01em;
+  }
+  .ck-time .ampm{font-size:.3em;color:var(--muted);margin-left:.3em;font-weight:400}
+  .ck-date{color:var(--muted);font-size:3cqh}
+
+  .ck-next{
+    display:flex;align-items:center;justify-content:space-between;gap:3%;
+    width:100%;padding:2.2cqh 2.8%;
+    border:1px solid var(--line);border-radius:1.8cqh;
+    background:linear-gradient(180deg,rgba(255,255,255,.035),transparent),var(--surface);
+  }
+  .ck-next .l{text-align:left}
+  .ck-next .r{text-align:right}
+  .eyebrow{color:var(--muted);font-size:2cqh;letter-spacing:.12em;text-transform:uppercase}
+  .ck-name{font-size:6cqh;font-weight:700;color:var(--accent);margin-top:.5cqh}
+  .ck-count{font-size:6cqh;font-weight:300;font-variant-numeric:tabular-nums}
+  .ck-nextat{color:var(--muted);font-size:2.4cqh;margin-top:.5cqh}
+  .ck-nextat b{color:var(--text)}
+
+  .ck-grid{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:1.4cqh;width:100%;
+  }
+  .cell{
+    padding:1.8cqh 0;
+    border:1px solid var(--line);border-radius:1.4cqh;
+    background:rgba(255,255,255,.025);
+  }
+  .cell .k{color:var(--muted);font-size:2.2cqh;letter-spacing:.06em}
+  .cell .t{font-size:3.6cqh;font-weight:600;margin-top:.6cqh;font-variant-numeric:tabular-nums}
+  .cell.next{border-color:var(--accent-line);background:var(--accent-dim)}
+  .cell.next .k{color:var(--accent)}
+  .cell.past{opacity:.4}
+
+  /* ---- gaya minimalis ---- */
+  .jam.mini{flex-direction:column;justify-content:center}
+  .ckm-time{font-size:30cqh;font-weight:200;line-height:1;font-variant-numeric:tabular-nums}
+  .ckm-time .sec{font-size:.32em;color:var(--muted);font-weight:300;margin-left:.15em}
+  .ckm-next{margin-top:3cqh;color:var(--muted);font-size:3.6cqh}
+  .ckm-next b{color:var(--accent);font-weight:600}
+
+  /* ---- notifikasi (atas skrin TV) ---- */
+  .notif{
+    position:absolute;top:5%;right:-120%;
+    width:36%;
+    background:rgba(22,36,31,.97);
+    border:1px solid var(--accent-line);
+    border-radius:1.6cqh;
+    padding:2cqh 2.2cqh;
+    display:flex;gap:1.8cqh;align-items:center;
+    transition:right .45s cubic-bezier(.2,.9,.3,1.2);
+    box-shadow:0 10px 30px rgba(0,0,0,.5);
+  }
+  .notif.show{right:4%}
+  .notif .ic{
+    width:6cqh;height:6cqh;border-radius:50%;
+    background:var(--accent-dim);border:1px solid var(--accent-line);
+    display:flex;align-items:center;justify-content:center;flex:none;
+    color:var(--accent);font-size:3cqh;
+  }
+  .notif .t1{font-weight:700;font-size:2.6cqh}
+  .notif .t2{color:var(--muted);font-size:2.2cqh;margin-top:.4cqh}
+
+  /* ---- nota bawah ---- */
+  .notes{
+    margin-top:30px;max-width:820px;
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;
+  }
+  .note{
+    background:var(--surface);border:1px solid var(--line);border-radius:14px;
+    padding:14px 16px;font-size:13.5px;color:var(--muted);
+  }
+  .note b{color:var(--text);display:block;margin-bottom:4px;font-size:14px}
+  .foot{margin-top:26px;color:#5c6f66;font-size:12.5px}
+  .foot a{color:var(--accent);text-decoration:none}
+</style>
+</head>
+<body>
+
+  <h1>Waktu Solat <span>untuk Android TV</span></h1>
+  <p class="sub">Mock paparan Mod Jam — jam di skrin TV bergerak mengikut masa sebenar. Tukar gaya &amp; cuba simulasi azan.</p>
+
+  <div class="controls">
+    <button id="btnFull" class="on" onclick="setStyle('full')">Gaya Lengkap</button>
+    <button id="btnMini" onclick="setStyle('mini')">Gaya Minimalis</button>
+    <button onclick="azan()">▶ Simulasi Notifikasi Azan</button>
+  </div>
+
+  <div class="tv">
+    <div class="screen" id="screen">
+      <div class="led on" id="led"></div>
+
+      <!-- ===== MOD JAM: LENGKAP ===== -->
+      <div class="jam full">
+        <div class="ck-time"><span id="tH">--</span>:<span id="tM">--</span><span class="ampm" id="tAP">AM</span></div>
+        <div class="ck-date" id="tDate">-</div>
+
+        <div class="ck-next">
+          <div class="l">
+            <div class="eyebrow">Seterusnya</div>
+            <div class="ck-name" id="tName">Zohor</div>
+          </div>
+          <div class="r">
+            <div class="ck-count" id="tCount">-</div>
+            <div class="ck-nextat">pada <b id="tAt">--:--</b></div>
+          </div>
+        </div>
+
+        <div class="ck-grid" id="grid"></div>
+      </div>
+
+      <!-- ===== MOD JAM: MINIMALIS ===== -->
+      <div class="jam mini">
+        <div class="ckm-time"><span id="mH">--</span>:<span id="mM">--</span><span class="sec" id="mS">--</span></div>
+        <div class="ckm-next" id="mNext">-</div>
+      </div>
+
+      <!-- ===== NOTIFIKASI AZAN ===== -->
+      <div class="notif" id="notif">
+        <div class="ic">🕌</div>
+        <div>
+          <div class="t1" id="nTitle">Maghrib</div>
+          <div class="t2" id="nText">Waktu Maghrib telah masuk · 19:07</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="notes">
+    <div class="note"><b>Mod Jam</b>Paparan untuk dibiarkan hidup di TV — jam besar, waktu seterusnya dengan kira detik, dan semua waktu hari ini. Skrin tidak tidur.</div>
+    <div class="note"><b>Dua gaya</b>Lengkap (jam + senarai waktu) atau Minimalis (jam besar + satu baris waktu seterusnya). Pilihan disimpan.</div>
+    <div class="note"><b>Notifikasi azan</b>Setiap masuk waktu, notifikasi dengan bunyi muncul sekejap di atas skrin TV. Berfungsi walaupun app ditutup.</div>
+    <div class="note"><b>Remote TV</b>Anak panah untuk gerak fokus, OK untuk pilih, butang Back kembali dari Mod Jam. TV tanpa GPS — lokasi ditetapkan sekali di Tetapan.</div>
+  </div>
+
+  <p class="foot">Mock statik untuk pra-tonton · App sebenar: <a href="https://github.com/rashidzainol/waktu-solat">github.com/rashidzainol/waktu-solat</a></p>
+
+<script>
+/* ============================================================
+   Mock — masa jam & kira detik menggunakan masa sebenar.
+   Waktu solat contoh (Kuala Lumpur, hardcoded untuk mock).
+   ============================================================ */
+
+var TIMES = [
+  { k:'imsak',   label:'Imsak',   h:5,  m:53 },
+  { k:'fajr',    label:'Subuh',   h:6,  m:3  },
+  { k:'syuruk',  label:'Syuruk',  h:7,  m:18 },
+  { k:'dhuha',   label:'Duha',    h:7,  m:38 },
+  { k:'dhuhr',   label:'Zohor',   h:13, m:23 },
+  { k:'asr',     label:'Asar',    h:16, m:47 },
+  { k:'maghrib', label:'Maghrib', h:19, m:7  },
+  { k:'isha',    label:'Isyak',   h:20, m:17 }
+];
+
+var DAYS = ['Ahad','Isnin','Selasa','Rabu','Khamis','Jumaat','Sabtu'];
+var MONTHS = ['Januari','Februari','Mac','April','Mei','Jun','Julai','Ogos','September','Oktober','November','Disember'];
+var PRAYERS = ['fajr','dhuhr','asr','maghrib','isha'];
+
+function pad(n){ return (n<10?'0':'')+n; }
+
+function todayTimes(){
+  var now = new Date();
+  return TIMES.map(function(t){
+    var d = new Date(now.getFullYear(), now.getMonth(), now.getDate(), t.h, t.m, 0, 0);
+    return { k:t.k, label:t.label, date:d };
+  });
+}
+
+function nextOf(now){
+  var list = todayTimes();
+  for (var i=0;i<list.length;i++){
+    if (list[i].k === 'imsak' || list[i].k === 'syuruk' || list[i].k === 'dhuha') continue;
+    if (list[i].date > now) return list[i];
+  }
+  // esok Subuh
+  var t = TIMES[1];
+  return { k:t.k, label:t.label, tomorrow:true,
+    date:new Date(now.getFullYear(), now.getMonth(), now.getDate()+1, t.h, t.m, 0, 0) };
+}
+
+function countdownText(ms){
+  if (ms < 0) ms = 0;
+  var s = Math.floor(ms/1000);
+  var h = Math.floor(s/3600); s -= h*3600;
+  var m = Math.floor(s/60);   s -= m*60;
+  if (h>0) return h+' jam '+m+' min '+s+' s';
+  if (m>0) return m+' min '+s+' s';
+  return s+' s';
+}
+
+/* ---- bina grid ---- */
+function buildGrid(){
+  var list = todayTimes();
+  var now = new Date();
+  var nx = nextOf(now);
+  var grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  list.forEach(function(t){
+    var c = document.createElement('div');
+    c.className = 'cell';
+    if (nx.k === t.k && !nx.tomorrow) c.classList.add('next');
+    else if (t.date < now) c.classList.add('past');
+    c.innerHTML = '<div class="k">'+t.label+'</div><div class="t">'+pad(t.h)+':'+pad(t.m)+'</div>';
+    grid.appendChild(c);
+  });
+}
+
+/* ---- kemas kini jam ---- */
+function tick(){
+  var now = new Date();
+  var h12 = now.getHours() % 12; if (h12 === 0) h12 = 12;
+
+  document.getElementById('tH').textContent = pad(h12);
+  document.getElementById('tM').textContent = pad(now.getMinutes());
+  document.getElementById('tAP').textContent = now.getHours() < 12 ? 'AM' : 'PM';
+  document.getElementById('tDate').textContent =
+    DAYS[now.getDay()] + ', ' + now.getDate() + ' ' + MONTHS[now.getMonth()] + ' ' + now.getFullYear();
+
+  document.getElementById('mH').textContent = pad(h12);
+  document.getElementById('mM').textContent = pad(now.getMinutes());
+  document.getElementById('mS').textContent = pad(now.getSeconds());
+
+  var nx = nextOf(now);
+  var at = pad(nx.date.getHours())+':'+pad(nx.date.getMinutes());
+  var nameTxt = nx.label + (nx.tomorrow ? ' · esok' : '');
+  var cd = countdownText(nx.date - now);
+
+  document.getElementById('tName').textContent = nameTxt;
+  document.getElementById('tAt').textContent = at;
+  document.getElementById('tCount').textContent = cd;
+
+  document.getElementById('mNext').innerHTML =
+    '<b>'+nameTxt+'</b> pukul <b>'+at+'</b> · lagi <b>'+cd+'</b>';
+}
+
+function setStyle(s){
+  var sc = document.getElementById('screen');
+  sc.classList.toggle('mini', s === 'mini');
+  document.getElementById('btnFull').classList.toggle('on', s === 'full');
+  document.getElementById('btnMini').classList.toggle('on', s === 'mini');
+}
+
+var azanTimer = null;
+function azan(){
+  var nx = nextOf(new Date());
+  document.getElementById('nTitle').textContent = nx.label;
+  document.getElementById('nText').textContent =
+    'Waktu ' + nx.label + ' telah masuk · ' + pad(nx.date.getHours()) + ':' + pad(nx.date.getMinutes());
+  var n = document.getElementById('notif');
+  n.classList.add('show');
+  clearTimeout(azanTimer);
+  azanTimer = setTimeout(function(){ n.classList.remove('show'); }, 4200);
+}
+
+buildGrid();
+tick();
+setInterval(tick, 1000);
+// kemas kini grid sekali seminit (highlight past/next)
+setInterval(buildGrid, 60000);
+</script>
+</body>
+</html>
