@@ -40,6 +40,17 @@
             </intent-filter>
         </activity>
 
+        <!-- Widget homescreen -->
+        <receiver android:name=".SolatWidget" android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="my.rashidzainol.waktusolat.WIDGET_TICK" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_info" />
+        </receiver>
+
         <!-- Alarm waktu solat -->
         <receiver android:name=".NotifReceiver" android:exported="false" />
 

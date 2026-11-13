@@ -343,6 +343,29 @@
     } catch (e) {}
   }
 
+  /* ------------------------------------------------------ widget (APK) */
+
+  function pushWidget() {
+    try {
+      if (!window.AndroidNotif || !window.AndroidNotif.updateWidget) return;
+      var days = [];
+      [new Date(), nextDay(new Date())].forEach(function (day) {
+        var times = C.computeTimes(day);
+        var t = {};
+        C.ORDER.forEach(function (k) {
+          t[k] = times[k] ? times[k].getTime() : 0;
+        });
+        days.push({
+          date: day.getFullYear() + '-' + C.pad2(day.getMonth() + 1) + '-' + C.pad2(day.getDate()),
+          times: t
+        });
+      });
+      window.AndroidNotif.updateWidget(JSON.stringify({
+        city: C.state.city, days: days
+      }));
+    } catch (e) {}
+  }
+
   function updateCountdown(sc, now) {
     var el = $('cdVal');
     if (!el) return;
@@ -374,6 +397,7 @@
       lastDateStr = ds;
       renderTimes(now);
       pushSchedule();
+      pushWidget();
     }
     if (currentView === 'clock') renderClock(now);
   }
@@ -639,6 +663,7 @@
     renderTimes(new Date());
     renderQibla();
     pushSchedule();
+    pushWidget();
   }
 
   /* -------------------------------------------------------------- views */
@@ -1063,6 +1088,7 @@
     setInterval(tick, 1000);
     tick();
     pushSchedule();
+    pushWidget();
 
     if (!hadSave && startView !== 'clock') setTimeout(function () { locate(true); }, 800);
 

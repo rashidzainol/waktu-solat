@@ -478,6 +478,26 @@ html[data-theme="minimal"] .btn{border-radius:9px}
 }
 
 /* ==========================================================================
+   TABLET (≥700px) — paparan lebih lebar
+   ========================================================================== */
+
+@media (min-width:700px) and (max-width:1099px){
+  .app{max-width:760px}
+  main{padding:22px 24px calc(96px + var(--safe-b))}
+  .topbar{padding:16px 0}
+  .hero-name{font-size:30px}
+  .hero-time{font-size:38px}
+  .countdown{font-size:16px}
+  .prow{padding:13px 20px}
+  .pname{font-size:18px}
+  .ptime{font-size:19px}
+  .tabbar .inner{max-width:640px}
+  .tab span{font-size:14px}
+  .qibla-big{font-size:44px}
+  .compass-wrap{max-width:380px;margin-left:auto;margin-right:auto}
+}
+
+/* ==========================================================================
    MOD JAM (TV)
    ========================================================================== */
 

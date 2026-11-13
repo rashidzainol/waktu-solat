@@ -56,6 +56,9 @@ public class MainActivity extends Activity {
         if (isTv) {
             // TV: paparan sentiasa landskap.
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+        } else if (isTablet()) {
+            // Tablet: ikut orientasi pengguna (potret + landskap).
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_FULL_USER);
         }
 
         Window win = getWindow();
@@ -138,6 +141,14 @@ public class MainActivity extends Activity {
         } catch (Exception ignored) {}
         // Fallback: kebanyakan TV melaporkan ciri leanback.
         return getPackageManager().hasSystemFeature("android.software.leanback");
+    }
+
+    private boolean isTablet() {
+        try {
+            return getResources().getConfiguration().smallestScreenWidthDp >= 600;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private void requestNotificationPermissionIfNeeded() {
@@ -249,6 +260,15 @@ public class MainActivity extends Activity {
         public void cancel() {
             try {
                 PrayerAlarms.apply(MainActivity.this, "[]");
+            } catch (Exception ignored) {
+            }
+        }
+
+        /** json = data widget dari ui.js: {days:[{date,times:{...}}], city} */
+        @JavascriptInterface
+        public void updateWidget(String json) {
+            try {
+                SolatWidget.saveData(MainActivity.this, json);
             } catch (Exception ignored) {
             }
         }
