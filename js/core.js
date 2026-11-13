@@ -1,5 +1,9 @@
 /* ==========================================================================
-   core.js — state, solar math, prayer times, qibla bearing
+   core.js — zon JAKIM, data waktu solat rasmi, kiblat, takwim
+   ==========================================================================
+   Waktu solat TIDAK lagi dikira. Data bulat-bulat daripada JAKIM (e-Solat),
+   dibenam dalam app (js/jakim-data.js) dan boleh dikemas kini dalam talian
+   (cache per peranti) selepas 2026.
    ========================================================================== */
 (function (global) {
   'use strict';
@@ -9,134 +13,115 @@
 
   var KAABA = { lat: 21.4225, lon: 39.8262 };
 
+  // Waktu JAKIM diterbitkan dalam masa Malaysia (UTC+8), sentiasa.
+  var MYT_MINUTES = 8 * 60;
+
   /* ---------------------------------------------------------------- utils */
 
   function wrap360(a) { return ((a % 360) + 360) % 360; }
   function wrap180(a) { a = wrap360(a); return a > 180 ? a - 360 : a; }
   function clamp(v, lo, hi) { return Math.min(hi, Math.max(lo, v)); }
+  function pad2(n) { return (n < 10 ? '0' : '') + n; }
 
-  /* --------------------------------------------------------- solar engine */
+  /* --------------------------------------------------------- zon JAKIM */
 
-  // Julian Day at 0h UT of the given calendar date.
-  function julianDay(y, m, d) {
-    if (m <= 2) { y -= 1; m += 12; }
-    var A = Math.floor(y / 100);
-    var B = 2 - A + Math.floor(A / 4);
-    return Math.floor(365.25 * (y + 4716)) + Math.floor(30.6001 * (m + 1)) + d + B - 1524.5;
-  }
-
-  // Low-precision solar coordinates (Meeus). Accurate to ~1 minute for our use.
-  // jd: Julian Day including fraction (UT)
-  function sunPosition(jd) {
-    var n = jd - 2451545.0;
-    var L = 280.460 + 0.9856474 * n;            // mean longitude (deg)
-    var g = (357.528 + 0.9856003 * n) * D2R;    // mean anomaly
-    var lambda = (L + 1.915 * Math.sin(g) + 0.020 * Math.sin(2 * g)) * D2R;
-    var eps = (23.439 - 0.0000004 * n) * D2R;   // obliquity
-
-    var decl = Math.asin(Math.sin(eps) * Math.sin(lambda)) * R2D;
-    var ra = Math.atan2(Math.cos(eps) * Math.sin(lambda), Math.cos(lambda)) * R2D;
-
-    // Equation of time = apparent solar time - mean solar time (hours)
-    var eot = wrap180(L - ra) / 15;
-
-    return { decl: decl, eot: eot, ra: ra };
-  }
-
-  // Hour angle (degrees) at which the sun reaches the given altitude.
-  // Returns null when the sun never reaches that altitude (polar day/night).
-  function hourAngle(lat, decl, altitude) {
-    var c = (Math.sin(altitude * D2R) - Math.sin(lat * D2R) * Math.sin(decl * D2R)) /
-            (Math.cos(lat * D2R) * Math.cos(decl * D2R));
-    if (c > 1 || c < -1) return null;
-    return Math.acos(c) * R2D;
-  }
-
-  // Sun altitude for Asr (shadow of an object is `factor` times its height).
-  function asrAltitude(lat, decl, factor) {
-    return Math.atan(1 / (factor + Math.tan(Math.abs(lat - decl) * D2R))) * R2D;
-  }
-
-  /* ------------------------------------------------------------- methods */
-
-  var METHODS = {
-    jakim:   { name: 'JAKIM',            fajr: 18,   isha: 18,   note: 'Subuh 18°, Isyak 18° (rujukan takwim JAKIM)' },
-    mwl:     { name: 'Muslim World League', fajr: 18, isha: 17,  note: 'Subuh 18°, Isyak 17°' },
-    isna:    { name: 'ISNA',             fajr: 15,   isha: 15,   note: 'Subuh 15°, Isyak 15°' },
-    egypt:   { name: 'Mesir',            fajr: 19.5, isha: 17.5, note: 'Subuh 19.5°, Isyak 17.5°' },
-    karachi: { name: 'Karachi',          fajr: 18,   isha: 18,   note: 'Subuh 18°, Isyak 18°' },
-    makkah:  { name: 'Umm al-Qura',      fajr: 18.5, isha: null, note: 'Subuh 18.5°, Isyak = Maghrib + 90 min' }
-  };
-
-  var CITIES = [
-    { name: 'Kuala Lumpur',   lat: 3.1390,  lon: 101.6869 },
-    { name: 'Putrajaya',      lat: 2.9264,  lon: 101.6964 },
-    { name: 'Shah Alam',      lat: 3.0733,  lon: 101.5185 },
-    { name: 'Seremban',       lat: 2.7297,  lon: 101.9381 },
-    { name: 'Melaka',         lat: 2.1896,  lon: 102.2501 },
-    { name: 'Johor Bahru',    lat: 1.4927,  lon: 103.7414 },
-    { name: 'Batu Pahat',     lat: 1.8548,  lon: 102.9325 },
-    { name: 'Ipoh',           lat: 4.5975,  lon: 101.0901 },
-    { name: 'George Town',    lat: 5.4141,  lon: 100.3288 },
-    { name: 'Alor Setar',     lat: 6.1184,  lon: 100.3685 },
-    { name: 'Kangar',         lat: 6.4414,  lon: 100.1986 },
-    { name: 'Kota Bharu',     lat: 6.1254,  lon: 102.2381 },
-    { name: 'Kuala Terengganu', lat: 5.3302, lon: 103.1408 },
-    { name: 'Kuantan',        lat: 3.8077,  lon: 103.3260 },
-    { name: 'Kuching',        lat: 1.5533,  lon: 110.3592 },
-    { name: 'Sibu',           lat: 2.2878,  lon: 111.8305 },
-    { name: 'Miri',           lat: 4.3995,  lon: 113.9914 },
-    { name: 'Kota Kinabalu',  lat: 5.9804,  lon: 116.0735 },
-    { name: 'Sandakan',       lat: 5.8394,  lon: 118.1172 },
-    { name: 'Labuan',         lat: 5.2831,  lon: 115.2308 }
+  var ZONES = [
+    { code: 'WLY01', state: 'Wilayah Persekutuan', name: 'Kuala Lumpur, Putrajaya' },
+    { code: 'WLY02', state: 'Wilayah Persekutuan', name: 'Labuan' },
+    { code: 'JHR01', state: 'Johor', name: 'Pulau Aur dan Pulau Pemanggil' },
+    { code: 'JHR02', state: 'Johor', name: 'Johor Bahru, Kota Tinggi, Mersing, Kulai' },
+    { code: 'JHR03', state: 'Johor', name: 'Kluang, Pontian' },
+    { code: 'JHR04', state: 'Johor', name: 'Batu Pahat, Muar, Segamat, Gemas Johor, Tangkak' },
+    { code: 'KDH01', state: 'Kedah', name: 'Kota Setar, Kubang Pasu, Pokok Sena' },
+    { code: 'KDH02', state: 'Kedah', name: 'Kuala Muda, Yan, Pendang' },
+    { code: 'KDH03', state: 'Kedah', name: 'Padang Terap, Sik' },
+    { code: 'KDH04', state: 'Kedah', name: 'Baling' },
+    { code: 'KDH05', state: 'Kedah', name: 'Bandar Baharu, Kulim' },
+    { code: 'KDH06', state: 'Kedah', name: 'Langkawi' },
+    { code: 'KDH07', state: 'Kedah', name: 'Puncak Gunung Jerai' },
+    { code: 'KTN01', state: 'Kelantan', name: 'Bachok, Kota Bharu, Machang, Pasir Mas, Pasir Puteh, Tanah Merah, Tumpat, Kuala Krai' },
+    { code: 'KTN02', state: 'Kelantan', name: 'Gua Musang (Galas, Bertam), Jeli, Lojing' },
+    { code: 'MLK01', state: 'Melaka', name: 'Seluruh Negeri Melaka' },
+    { code: 'NGS01', state: 'Negeri Sembilan', name: 'Tampin, Jempol' },
+    { code: 'NGS02', state: 'Negeri Sembilan', name: 'Jelebu, Kuala Pilah, Rembau' },
+    { code: 'NGS03', state: 'Negeri Sembilan', name: 'Port Dickson, Seremban' },
+    { code: 'PHG01', state: 'Pahang', name: 'Pulau Tioman' },
+    { code: 'PHG02', state: 'Pahang', name: 'Kuantan, Pekan, Muadzam Shah' },
+    { code: 'PHG03', state: 'Pahang', name: 'Jerantut, Temerloh, Maran, Bera, Chenor, Jengka' },
+    { code: 'PHG04', state: 'Pahang', name: 'Bentong, Lipis, Raub' },
+    { code: 'PHG05', state: 'Pahang', name: 'Genting Sempah, Janda Baik, Bukit Tinggi' },
+    { code: 'PHG06', state: 'Pahang', name: 'Cameron Highlands, Genting Highlands, Bukit Fraser' },
+    { code: 'PHG07', state: 'Pahang', name: 'Rompin (Rompin, Endau, Pontian)' },
+    { code: 'PLS01', state: 'Perlis', name: 'Kangar, Padang Besar, Arau' },
+    { code: 'PNG01', state: 'Pulau Pinang', name: 'Seluruh Negeri Pulau Pinang' },
+    { code: 'PRK01', state: 'Perak', name: 'Tapah, Slim River, Tanjung Malim' },
+    { code: 'PRK02', state: 'Perak', name: 'Kuala Kangsar, Sg. Siput, Ipoh, Batu Gajah, Kampar' },
+    { code: 'PRK03', state: 'Perak', name: 'Lenggong, Pengkalan Hulu, Grik' },
+    { code: 'PRK04', state: 'Perak', name: 'Temengor, Belum' },
+    { code: 'PRK05', state: 'Perak', name: 'Kg Gajah, Teluk Intan, Bagan Datuk, Seri Iskandar, Beruas, Parit, Lumut, Sitiawan, Pangkor' },
+    { code: 'PRK06', state: 'Perak', name: 'Selama, Taiping, Bagan Serai, Parit Buntar' },
+    { code: 'PRK07', state: 'Perak', name: 'Bukit Larut' },
+    { code: 'SBH01', state: 'Sabah', name: 'Sandakan (Timur), Bukit Garam, Semawang, Temanggong, Tambisan, Sukau' },
+    { code: 'SBH02', state: 'Sabah', name: 'Beluran, Telupid, Pinangah, Terusan, Kuamut, Sandakan (Barat)' },
+    { code: 'SBH03', state: 'Sabah', name: 'Lahad Datu, Silabukan, Kunak, Sahabat, Semporna, Tungku, Tawau (Timur)' },
+    { code: 'SBH04', state: 'Sabah', name: 'Bandar Tawau, Balong, Merotai, Kalabakan, Tawau (Barat)' },
+    { code: 'SBH05', state: 'Sabah', name: 'Kudat, Kota Marudu, Pitas, Pulau Banggi' },
+    { code: 'SBH06', state: 'Sabah', name: 'Gunung Kinabalu' },
+    { code: 'SBH07', state: 'Sabah', name: 'Kota Kinabalu, Ranau, Kota Belud, Tuaran, Penampang, Papar, Putatan' },
+    { code: 'SBH08', state: 'Sabah', name: 'Pensiangan, Keningau, Tambunan, Nabawan' },
+    { code: 'SBH09', state: 'Sabah', name: 'Beaufort, Kuala Penyu, Sipitang, Tenom, Long Pasia, Membakut, Weston' },
+    { code: 'SGR01', state: 'Selangor', name: 'Gombak, Petaling, Sepang, Hulu Langat, Hulu Selangor, Shah Alam' },
+    { code: 'SGR02', state: 'Selangor', name: 'Kuala Selangor, Sabak Bernam' },
+    { code: 'SGR03', state: 'Selangor', name: 'Klang, Kuala Langat' },
+    { code: 'SWK01', state: 'Sarawak', name: 'Limbang, Lawas, Sundar, Trusan' },
+    { code: 'SWK02', state: 'Sarawak', name: 'Miri, Niah, Bekenu, Sibuti, Marudi' },
+    { code: 'SWK03', state: 'Sarawak', name: 'Pandan, Belaga, Suai, Tatau, Sebauh, Bintulu' },
+    { code: 'SWK04', state: 'Sarawak', name: 'Sibu, Mukah, Dalat, Song, Igan, Oya, Balingian, Kanowit, Kapit' },
+    { code: 'SWK05', state: 'Sarawak', name: 'Sarikei, Matu, Julau, Rajang, Daro, Bintangor, Belawai' },
+    { code: 'SWK06', state: 'Sarawak', name: 'Lubok Antu, Sri Aman, Roban, Debak, Kabong, Lingga, Engkelili, Betong, Spaoh, Pusa, Saratok' },
+    { code: 'SWK07', state: 'Sarawak', name: 'Serian, Simunjan, Samarahan, Sebuyau, Meludam' },
+    { code: 'SWK08', state: 'Sarawak', name: 'Kuching, Bau, Lundu, Sematan' },
+    { code: 'SWK09', state: 'Sarawak', name: 'Zon Khas (Kampung Patarikan)' },
+    { code: 'TRG01', state: 'Terengganu', name: 'Kuala Terengganu, Marang, Kuala Nerus' },
+    { code: 'TRG02', state: 'Terengganu', name: 'Besut, Setiu' },
+    { code: 'TRG03', state: 'Terengganu', name: 'Hulu Terengganu' },
+    { code: 'TRG04', state: 'Terengganu', name: 'Dungun, Kemaman' }
   ];
 
   /* -------------------------------------------------------------- state */
 
   var DEFAULTS = {
-    lat: 3.1390,
-    lon: 101.6869,
-    city: 'Kuala Lumpur',
+    zone: 'WLY01',
     theme: 'dark',
-    method: 'jakim',
-    fajrAngle: 18,
-    ishaAngle: 18,
-    asrFactor: 1,
-    ihtiyat: 2,
-    tzMode: 'device',
-    tzOffset: 8,
-    hijriOffset: 0,
     qiblaMode: 'auto',
     qiblaBearing: 292.5,      // manual bearing from a qibla certificate
     compassOffset: 0,
-    notify: true,             // notifikasi waktu solat (APK Android)
-    autoClock: false,         // buka Mod Jam terus semasa app dibuka
-    clockStyle: 'full',       // 'full' | 'mini' — gaya Mod Jam
-    adj: { imsak: 0, fajr: 0, syuruk: 0, dhuha: 0, dhuhr: 0, asr: 0, maghrib: 0, isha: 0 }
+    gpsLat: null,             // koordinat GPS terakhir (untuk kiblat)
+    gpsLon: null,
+    notify: true,
+    autoClock: false,
+    clockStyle: 'full'
   };
 
-  var STORE_KEY = 'waktu-solat/v1';
+  var STORE_KEY = 'waktu-solat/v2';
+  var OLD_KEY = 'waktu-solat/v1';
   var state = null;
 
   function loadState() {
     var base = JSON.parse(JSON.stringify(DEFAULTS));
-    try {
-      var raw = localStorage.getItem(STORE_KEY);
-      if (raw) {
+    var raw = null;
+    try { raw = localStorage.getItem(STORE_KEY) || localStorage.getItem(OLD_KEY); } catch (e) {}
+    if (raw) {
+      try {
         var saved = JSON.parse(raw);
         Object.keys(base).forEach(function (k) {
-          if (saved[k] !== undefined && saved[k] !== null) {
-            if (k === 'adj' && typeof saved[k] === 'object') {
-              Object.keys(base.adj).forEach(function (p) {
-                if (typeof saved[k][p] === 'number') base.adj[p] = saved[k][p];
-              });
-            } else {
-              base[k] = saved[k];
-            }
-          }
+          if (saved[k] !== undefined && saved[k] !== null) base[k] = saved[k];
         });
-      }
-    } catch (e) { /* ignore corrupt storage */ }
+        // zon luar senarai → lalai
+        var ok = ZONES.some(function (z) { return z.code === base.zone; });
+        if (!ok) base.zone = DEFAULTS.zone;
+      } catch (e) { /* ignore corrupt storage */ }
+    }
     state = base;
     return state;
   }
@@ -151,31 +136,121 @@
     return state;
   }
 
-  /* -------------------------------------------------------- time helpers */
+  /* ---------------------------------------------------- data JAKIM */
 
-  // Minutes east of UTC for a given local date, honouring the tz setting.
-  function tzOffsetMinutes(date) {
-    if (state.tzMode === 'manual') return Math.round(state.tzOffset * 60);
-    return -date.getTimezoneOffset();
+  var EMBED = (typeof window !== 'undefined' && window.JAKIM_DATA) ? window.JAKIM_DATA : null;
+  var DATA_YEAR = EMBED ? EMBED.year : null;
+
+  function cacheKey(zone, year) { return 'jakim-cache/' + year + ':' + zone; }
+
+  // Baris masa bagi (zon, tahun) — array rentetan 'HHMM...' 32 digit, atau null.
+  function zoneRows(zone, year) {
+    if (EMBED && year === EMBED.year && EMBED.zones[zone]) return EMBED.zones[zone];
+    try {
+      var raw = localStorage.getItem(cacheKey(zone, year));
+      if (raw) {
+        var arr = JSON.parse(raw);
+        if (arr && arr.length) return arr;
+      }
+    } catch (e) {}
+    return null;
   }
 
-  // UTC instant (ms) of local midnight for the calendar date of `date`.
-  function localMidnightMs(date) {
-    var y = date.getFullYear(), m = date.getMonth(), d = date.getDate();
-    var offMin = tzOffsetMinutes(date);
-    return Date.UTC(y, m, d) - offMin * 60000;
+  function parseHHMM(s) {
+    if (typeof s !== 'string') return null;
+    var out = [];
+    for (var i = 0; i + 4 <= s.length; i += 4) {
+      out.push(parseInt(s.substr(i, 4), 10));
+    }
+    return out.length === 8 ? out : null;
+  }
+
+  // Tarikh kalendar Malaysia bagi satu saat (masa MYT, UTC+8).
+  function myParts(date) {
+    var d = new Date(date.getTime() + MYT_MINUTES * 60000);
+    return {
+      y: d.getUTCFullYear(), mo: d.getUTCMonth(), d: d.getUTCDate(),
+      doy: Math.floor((Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()) -
+            Date.UTC(d.getUTCFullYear(), 0, 1)) / 86400000) + 1
+    };
+  }
+
+  // Sumber data yang dipakai untuk zon semasa (untuk nota UI).
+  function dataSource() {
+    if (EMBED && EMBED.zones[state.zone]) return { year: EMBED.year, source: 'benam' };
+    try {
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (k && k.indexOf('jakim-cache/') === 0) {
+          var parts = k.slice('jakim-cache/'.length).split(':');
+          if (parts[1] === state.zone) {
+            var y = parseInt(parts[0], 10);
+            if (y) return { year: y, source: 'kemas kini' };
+          }
+        }
+      }
+    } catch (e) {}
+    return null;
+  }
+
+  /**
+   * Waktu solat rasmi JAKIM bagi hari yang mengandungi `date`.
+   * Pulangkan {imsak..isha: Date, missing:true} jika tiada data.
+   */
+  function computeTimes(date) {
+    var no = { missing: true, imsak: null, fajr: null, syuruk: null, dhuha: null,
+               dhuhr: null, asr: null, maghrib: null, isha: null };
+    var mp = myParts(date);
+    var rows = zoneRows(state.zone, mp.y);
+    if (!rows || mp.doy < 1 || mp.doy > rows.length) return no;
+    var t = parseHHMM(rows[mp.doy - 1]);
+    if (!t) return no;
+    var dayStart = Date.UTC(mp.y, mp.mo, mp.d) - MYT_MINUTES * 60000;
+    function at(min) {
+      return new Date(dayStart + Math.floor(min / 100) * 3600000 + (min % 100) * 60000);
+    }
+    return {
+      imsak: at(t[0]), fajr: at(t[1]), syuruk: at(t[2]), dhuha: at(t[3]),
+      dhuhr: at(t[4]), asr: at(t[5]), maghrib: at(t[6]), isha: at(t[7]),
+      missing: false
+    };
+  }
+
+  /** Muat turun data setahun dari e-Solat & simpan dalam cache peranti. */
+  function refreshZone(zone, year, cb) {
+    var url = 'https://www.e-solat.gov.my/index.php?r=esolatApi/takwimsolat' +
+              '&period=year&zone=' + encodeURIComponent(zone);
+    fetch(url)
+      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function (j) {
+        var pt = j && j.prayerTime;
+        if (!pt || !pt.length) throw new Error('Tiada data dari JAKIM');
+        var first = new Date(pt[0].date + 'T00:00:00Z');
+        if (isNaN(first.getTime()) || first.getUTCMonth() !== 0 || first.getUTCDate() !== 1) {
+          throw new Error('Data tidak bermula 1 Januari');
+        }
+        var out = [];
+        for (var i = 0; i < pt.length; i++) {
+          var d = pt[i];
+          var s = d.imsak.slice(0, 5) + d.fajr.slice(0, 5) + d.syuruk.slice(0, 5) +
+                  d.dhuha.slice(0, 5) + d.dhuhr.slice(0, 5) + d.asr.slice(0, 5) +
+                  d.maghrib.slice(0, 5) + d.isha.slice(0, 5);
+          out.push(s.replace(/:/g, ''));
+        }
+        localStorage.setItem(cacheKey(zone, year || DATA_YEAR), JSON.stringify(out));
+        cb(null, out.length);
+      })
+      .catch(function (err) { cb(err); });
   }
 
   /* -------------------------------------------------------- takwim hijri */
 
-  // Nama bulan Hijri mengikut JAKIM.
   var HIJRI_MONTHS = ['Muharam', 'Safar', 'Rabiulawal', 'Rabiulakhir',
                       'Jamadilawal', 'Jamadilakhir', 'Rejab', 'Syaaban',
                       'Ramadan', 'Syawal', 'Zulkaedah', 'Zulhijjah'];
 
   // Tarikh 1hb setiap bulan Hijri mengikut takwim JAKIM (Imkanur Rukyah),
-  // diambil daripada data rasmi e-Solat. Disimpan dalam app supaya kekal offline.
-  // Bermula 1 Muharam 1446 hingga akhir 2029.
+  // diambil daripada data rasmi e-Solat. Dibenamkan dalam app.
   var HIJRI_STARTS = [
     '2024-07-07', '2024-08-06', '2024-09-05', '2024-10-04', '2024-11-03', '2024-12-03',
     '2025-01-01', '2025-01-31', '2025-03-02', '2025-03-31', '2025-04-29', '2025-05-29',
@@ -197,7 +272,6 @@
   });
   var HIJRI_END_MS = Date.parse('2029-12-31T00:00:00Z');
 
-  // Hijri {y, m, d} untuk tarikh kalendar tempatan. null jika di luar jadual JAKIM.
   function hijriOf(date) {
     var ms = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
     if (ms < HIJRI_START_MS[0] || ms > HIJRI_END_MS) return null;
@@ -215,90 +289,7 @@
     };
   }
 
-  /* -------------------------------------------------------- prayer times */
-
-  var ORDER = ['imsak', 'fajr', 'syuruk', 'dhuha', 'dhuhr', 'asr', 'maghrib', 'isha'];
-
-  var META = {
-    imsak:   { label: 'Imsak',   sub: '10 min sebelum Subuh', prayer: false },
-    fajr:    { label: 'Subuh',   sub: '',                      prayer: true  },
-    syuruk:  { label: 'Syuruk',  sub: 'Matahari terbit',       prayer: false },
-    dhuha:   { label: 'Duha',    sub: '±20 min selepas syuruk', prayer: false },
-    dhuhr:   { label: 'Zohor',   sub: '',                      prayer: true  },
-    asr:     { label: 'Asar',    sub: '',                      prayer: true  },
-    maghrib: { label: 'Maghrib', sub: '',                      prayer: true  },
-    isha:    { label: 'Isyak',   sub: '',                      prayer: true  }
-  };
-
-  function computeTimes(date) {
-    // Calendar date in the zone we are displaying for.
-    var y, m, d;
-    if (state.tzMode === 'manual') {
-      var sh = new Date(date.getTime() + state.tzOffset * 3600000);
-      y = sh.getUTCFullYear(); m = sh.getUTCMonth() + 1; d = sh.getUTCDate();
-    } else {
-      y = date.getFullYear(); m = date.getMonth() + 1; d = date.getDate();
-    }
-
-    var offMin = tzOffsetMinutes(date);          // minutes east of UTC
-    // Solar hours below are measured from 00:00 UTC of the calendar date.
-    var dayStart = Date.UTC(y, m - 1, d);
-
-    // Solar parameters sampled at local noon.
-    var utNoonHours = 12 - offMin / 60;
-    var jd = julianDay(y, m, d) + utNoonHours / 24;
-    var sun = sunPosition(jd);
-
-    var lat = state.lat;
-    var decl = sun.decl;
-
-    // Solar transit in UT hours.
-    var transit = 12 - state.lon / 15 - sun.eot;
-
-    var method = METHODS[state.method];
-    var fajrAngle = (state.method === 'custom') ? state.fajrAngle : (method ? method.fajr : 18);
-    var ishaAngle = (state.method === 'custom') ? state.ishaAngle : (method ? method.isha : 18);
-
-    var hRise = hourAngle(lat, decl, -0.833);
-    var hFajr = hourAngle(lat, decl, -fajrAngle);
-    var hAsr  = hourAngle(lat, decl, asrAltitude(lat, decl, state.asrFactor));
-    var hIsha = ishaAngle == null ? null : hourAngle(lat, decl, -ishaAngle);
-
-    var iht = state.ihtiyat;
-    var adj = state.adj;
-
-    function at(utHours, extraMin) {
-      if (utHours == null || !isFinite(utHours)) return null;
-      var minutes = utHours * 60 + (extraMin || 0);
-      return new Date(dayStart + minutes * 60000);
-    }
-
-    var fajrUt = hFajr == null ? null : transit - hFajr / 15;
-    var riseUt = hRise == null ? null : transit - hRise / 15;
-    var setUt  = hRise == null ? null : transit + hRise / 15;
-    var asrUt  = hAsr  == null ? null : transit + hAsr / 15;
-    var ishaUt = hIsha == null ? null : transit + hIsha / 15;
-
-    var out = {
-      imsak:   at(fajrUt, iht - 10 + adj.imsak),
-      fajr:    at(fajrUt, iht + adj.fajr),
-      syuruk:  at(riseUt, adj.syuruk),           // JAKIM: no ihtiyat on syuruk
-      dhuha:   at(riseUt, 20 + adj.dhuha),
-      dhuhr:   at(transit, iht + adj.dhuhr),
-      asr:     at(asrUt, iht + adj.asr),
-      maghrib: at(setUt, iht + adj.maghrib),
-      isha:    at(ishaUt, iht + adj.isha)
-    };
-
-    // Umm al-Qura: Isha is fixed at Maghrib + 90 minutes.
-    if (state.method === 'makkah' && out.maghrib) {
-      out.isha = new Date(out.maghrib.getTime() + (90 + adj.isha) * 60000);
-    }
-
-    return out;
-  }
-
-  /* ------------------------------------------------------------- qibla */
+  /* ------------------------------------------------------------- kiblat */
 
   function qiblaBearing(lat, lon) {
     var p1 = lat * D2R, p2 = KAABA.lat * D2R;
@@ -317,29 +308,24 @@
     return 2 * R * Math.asin(Math.min(1, Math.sqrt(a)));
   }
 
-  // Bearing actually used by the compass, honouring the manual override.
+  // Bearing yang digunakan: manual (sijil) atau GPS terakhir.
   function activeQiblaBearing() {
     if (state.qiblaMode === 'manual') return wrap360(state.qiblaBearing);
-    return qiblaBearing(state.lat, state.lon);
+    if (state.gpsLat == null || state.gpsLon == null) return null;
+    return qiblaBearing(state.gpsLat, state.gpsLon);
   }
 
   /* ----------------------------------------------------------- formatting */
 
-  function pad2(n) { return (n < 10 ? '0' : '') + n; }
-
   function partsOf(date) {
-    if (state.tzMode === 'manual') {
-      var d = new Date(date.getTime() + state.tzOffset * 3600000);
-      return { h: d.getUTCHours(), m: d.getUTCMinutes(), s: d.getUTCSeconds(),
-               y: d.getUTCFullYear(), mo: d.getUTCMonth(), da: d.getUTCDate(),
-               wd: d.getUTCDay() };
-    }
-    return { h: date.getHours(), m: date.getMinutes(), s: date.getSeconds(),
-             y: date.getFullYear(), mo: date.getMonth(), da: date.getDate(),
-             wd: date.getDay() };
+    // Waktu solat sentiasa dalam masa Malaysia (UTC+8).
+    var d = new Date(date.getTime() + MYT_MINUTES * 60000);
+    return { h: d.getUTCHours(), m: d.getUTCMinutes(), s: d.getUTCSeconds(),
+             y: d.getUTCFullYear(), mo: d.getUTCMonth(), da: d.getUTCDate(),
+             wd: d.getUTCDay() };
   }
 
-  // Clock time rounded to the nearest minute (matches how takwim is published).
+  // Masa paparan dibundarkan ke minit terdekat (mengikut cara JAKIM terbitkan).
   function fmtTime(date) {
     if (!date) return '—';
     var p = partsOf(date);
@@ -349,6 +335,7 @@
   }
 
   function fmtDegMin(deg) {
+    if (deg == null) return '—';
     deg = wrap360(deg);
     var d = Math.floor(deg);
     var m = Math.round((deg - d) * 60);
@@ -356,49 +343,47 @@
     return d + '° ' + pad2(m) + '′';
   }
 
-  function nearestCity(lat, lon) {
-    var best = null, bestD = Infinity;
-    CITIES.forEach(function (c) {
-      var d = Math.hypot(c.lat - lat, c.lon - lon);
-      if (d < bestD) { bestD = d; best = c; }
-    });
-    return { city: best, deg: bestD };
+  function zoneOf(code) {
+    for (var i = 0; i < ZONES.length; i++) {
+      if (ZONES[i].code === code) return ZONES[i];
+    }
+    return null;
   }
 
   /* ------------------------------------------------------------- export */
 
   global.Core = {
-    D2R: D2R, R2D: R2D,
     KAABA: KAABA,
-    METHODS: METHODS,
-    CITIES: CITIES,
-    ORDER: ORDER,
-    META: META,
+    ZONES: ZONES,
+    META_LABELS: {
+      imsak: 'Imsak', fajr: 'Subuh', syuruk: 'Syuruk', dhuha: 'Duha',
+      dhuhr: 'Zohor', asr: 'Asar', maghrib: 'Maghrib', isha: 'Isyak'
+    },
+    ORDER: ['imsak', 'fajr', 'syuruk', 'dhuha', 'dhuhr', 'asr', 'maghrib', 'isha'],
+    PRAYER_KEYS: ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'],
     HIJRI_MONTHS: HIJRI_MONTHS,
     hijriOf: hijriOf,
     DEFAULTS: DEFAULTS,
     wrap360: wrap360,
     wrap180: wrap180,
     clamp: clamp,
+    pad2: pad2,
     get state() { return state; },
     loadState: loadState,
     saveState: saveState,
     resetState: resetState,
-    tzOffsetMinutes: tzOffsetMinutes,
-    localMidnightMs: localMidnightMs,
-    julianDay: julianDay,
-    sunPosition: sunPosition,
-    hourAngle: hourAngle,
-    asrAltitude: asrAltitude,
     computeTimes: computeTimes,
+    myParts: myParts,
+    dataSource: dataSource,
+    refreshZone: refreshZone,
+    zoneRows: zoneRows,
     qiblaBearing: qiblaBearing,
     distanceToKaaba: distanceToKaaba,
     activeQiblaBearing: activeQiblaBearing,
     fmtTime: fmtTime,
     fmtDegMin: fmtDegMin,
-    pad2: pad2,
     partsOf: partsOf,
-    nearestCity: nearestCity
+    zoneOf: zoneOf
   };
 
 })(window);

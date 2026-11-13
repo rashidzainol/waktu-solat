@@ -2,12 +2,16 @@
 
 Apl web (PWA) untuk waktu solat dan arah kiblat — untuk kegunaan peribadi.
 
-- **Waktu solat** dikira secara astronomi pada peranti. Tiada internet, tiada API, tiada akaun.
-- **Kaedah JAKIM** sebagai lalai (Subuh 18°, Isyak 18°), dengan pilihan MWL / ISNA / Mesir / Karachi / Umm al-Qura / tersuai.
-- **Kiblat auto** daripada GPS, dan **kiblat manual** — taip bearing dari sijil kiblat (contoh `292° 30′`).
-- Kompas langsung menggunakan sensor telefon, dengan pembetulan offset.
+- **Waktu solat diambil bulat-bulat daripada data rasmi JAKIM (e-Solat)** —
+  tiada pengiraan, tiada pelarasan, tiada tetapan kaedah. Papar seperti diterbitkan.
+- **60 zon rasmi JAKIM** seluruh Malaysia dibenamkan dalam app (setahun penuh),
+  jadi berfungsi **tanpa internet**. Data boleh dikemas kini dalam talian.
+- Masa sentiasa **MYT (UTC+8)** seperti terbitan JAKIM.
+- **Kiblat auto** daripada GPS, dan **kiblat manual** — taip bearing dari sijil
+  kiblat (contoh `292° 30′`). Kompas dengan pembetulan offset.
 - **3 tema**: Gelap, Terang, Minimalis.
-- **APK Android** (WebView offline) melalui GitHub Actions, atau dipasang sebagai PWA.
+- **APK Android** (WebView offline) untuk telefon, tablet & Android TV melalui
+  GitHub Actions, atau dipasang sebagai PWA.
 
 ---
 
@@ -34,11 +38,13 @@ powershell -ExecutionPolicy Bypass -File make-icons.ps1 C:\path\ke\logo.jpg
 waktu-solat/
 ├─ index.html            # markup
 ├─ app.css               # gaya + 3 tema
-├─ js/core.js            # enjin falak, waktu solat, bearing kiblat, takwim
+├─ js/jakim-data.js      # data rasmi JAKIM 2026 (60 zon × 365 hari)
+├─ js/core.js            # zon JAKIM, carian data, bearing kiblat, takwim
 ├─ js/compass.js         # bacaan sensor → heading
 ├─ js/ui.js              # paparan, navigasi, tetapan, tema
 ├─ manifest.webmanifest  # metadata PWA
 ├─ sw.js                 # cache offline
+├─ gen-jakim-data.ps1    # jana jakim-data.js dari API e-Solat
 ├─ icon-192.png
 ├─ icon-512.png
 ├─ icon-maskable-512.png
@@ -51,31 +57,17 @@ waktu-solat/
 
 ---
 
-## Ketepatan waktu solat
+## Data JAKIM (e-Solat)
 
-Diuji terhadap **Jadual Waktu Solat JAKIM** (WP Kuala Lumpur & Putrajaya 2026)
-bagi 20 tarikh rujukan (Januari + November):
+Waktu solat **bukan hasil pengiraan**. Ia dibaca terus dari jadual rasmi
+JAKIM (e-Solat) dan dipaparkan **bulat-bulat** seperti diterbitkan:
 
-| Waktu | Ralat purata | Ralat maksimum |
-|-------|-------------|----------------|
-| Imsak | 0.3 min | 1 min |
-| Subuh | 0.3 min | 1 min |
-| Syuruk | 0.8 min | 1 min |
-| Zohor | 0.8 min | 1 min |
-| Asar | 0.4 min | 1 min |
-| Maghrib | 0.6 min | 1 min |
-| Isyak | 0.5 min | 1 min |
-
-**100% dalam ±1 minit.** Jadual takwim rasmi dibundarkan dan dikira dengan
-koordinat rujukan sendiri, jadi perbezaan 1 minit adalah normal. Jika anda mahu
-tepat dengan surau/zon anda, gunakan **Tetapan → Pelarasan ikut waktu**
-(contoh: `Zohor +1`).
-
-Konvensyen yang digunakan (sama seperti takwim JAKIM):
-- Ihtiyat **+2 minit** untuk waktu solat, **0 minit** untuk Syuruk
-- Imsak = Subuh − 10 minit
-- Duha = Syuruk + 20 minit
-- Asar Shafi'i (bayang 1×) atau Hanafi (2×)
+- **60 zon rasmi** (WLY01, SGR01, JHR02, …) — pilih di **Tetapan → Zon JAKIM**.
+- **Setahun penuh** dibenamkan dalam app (`js/jakim-data.js`, jana dari API
+  e-Solat dengan `gen-jakim-data.ps1`), jadi app berfungsi **100% luar talian**.
+- Apabila JAKIM menerbitkan tahun baharu, tekan **Tetapan → Data JAKIM →
+  Kemas kini sekarang** (perlu internet sekali; data disimpan pada peranti).
+- Semua masa dipaparkan dalam **MYT (UTC+8)** mengikut konvensyen JAKIM.
 
 ---
 
@@ -274,5 +266,7 @@ peranti dipegang.
 
 ## Privasi
 
-Semua pengiraan berlaku pada peranti. Tiada data dihantar ke mana-mana pelayan.
-Tetapan disimpan dalam `localStorage` peranti.
+Waktu solat dibaca dari data rasmi JAKIM yang dibenam dalam app — tiada data
+dihantar ke mana-mana pelayan semasa kegunaan biasa. Kemas kini data (pilihan)
+memuat turun jadual dari e-Solat JAKIM sahaja. Tetapan disimpan dalam
+`localStorage` peranti.

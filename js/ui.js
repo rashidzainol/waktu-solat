@@ -1,5 +1,5 @@
 /* ==========================================================================
-   ui.js — rendering, navigation, settings
+   ui.js — rendering, navigation, settings (data JAKIM)
    ========================================================================== */
 (function () {
   'use strict';
@@ -12,7 +12,6 @@
                 'Julai', 'Ogos', 'September', 'Oktober', 'November', 'Disember'];
 
   var PRAYER_KEYS = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
-  var ADJ_KEYS = ['imsak', 'fajr', 'syuruk', 'dhuha', 'dhuhr', 'asr', 'maghrib', 'isha'];
 
   var THEMES = {
     dark:    { label: 'Gelap',     bar: '#070d0b', light: false },
@@ -58,16 +57,8 @@
     return window.isSecureContext === true;
   }
 
-  function tzLabel() {
-    var off = C.tzOffsetMinutes(new Date()) / 60;
-    var sign = off < 0 ? '\u2212' : '+';
-    var abs = Math.abs(off);
-    return 'UTC' + sign + (abs % 1 === 0 ? abs : abs.toFixed(1));
-  }
-
   function hijriText(date) {
-    var off = C.state.hijriOffset || 0;
-    var d = new Date(date.getFullYear(), date.getMonth(), date.getDate() + off, 12, 0, 0);
+    var d = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 12, 0, 0);
 
     // Takwim rasmi JAKIM.
     var hj = C.hijriOf(d);
@@ -99,8 +90,9 @@
     return s + ' s';
   }
 
-  function fmtCoord(v, pos, neg) {
-    return Math.abs(v).toFixed(4) + '° ' + (v >= 0 ? pos : neg);
+  function zoneText() {
+    var z = C.zoneOf(C.state.zone);
+    return z ? z.code + ' · ' + z.name : C.state.zone;
   }
 
   /* -------------------------------------------------------------- theme */
@@ -138,8 +130,8 @@
   function schedule(now) {
     var times = C.computeTimes(now);
     var events = PRAYER_KEYS
-      .map(function (k) { return { key: k, date: times[k] }; })
-      .filter(function (e) { return e.date != null; });
+      .map(function (k) { return times[k] ? { key: k, date: times[k] } : null; })
+      .filter(function (e) { return e != null; });
 
     var next = null;
     for (var i = 0; i < events.length; i++) {
@@ -149,7 +141,9 @@
     var tomorrowTimes = null;
     if (!next) {
       tomorrowTimes = C.computeTimes(nextDay(now));
-      next = { key: 'fajr', date: tomorrowTimes.fajr, tomorrow: true };
+      if (!tomorrowTimes.missing && tomorrowTimes.fajr) {
+        next = { key: 'fajr', date: tomorrowTimes.fajr, tomorrow: true };
+      }
     }
 
     var current = null;
@@ -158,7 +152,7 @@
     }
 
     return { times: times, events: events, next: next, current: current,
-             tomorrowTimes: tomorrowTimes };
+             tomorrowTimes: tomorrowTimes, missing: !!times.missing };
   }
 
   /* -------------------------------------------------------------- render */
@@ -168,12 +162,18 @@
     var st = C.state;
 
     // hero
-    var name = C.META[sc.next.key].label;
-    $('heroEyebrow').textContent = sc.next.tomorrow ? 'Seterusnya · esok' : 'Seterusnya';
+    var name = sc.next ? C.META_LABELS[sc.next.key] : '—';
+    $('heroEyebrow').textContent = sc.next
+      ? (sc.next.tomorrow ? 'Seterusnya · esok' : 'Seterusnya')
+      : 'Data JAKIM';
     $('nextName').textContent = name;
-    $('nextTime').textContent = C.fmtTime(sc.next.date);
-    $('countdown').innerHTML = 'lagi <b id="cdVal"></b>';
-    updateCountdown(sc, now);
+    $('nextTime').textContent = sc.next ? C.fmtTime(sc.next.date) : '—';
+    if (sc.next) {
+      $('countdown').innerHTML = 'lagi <b id="cdVal"></b>';
+      updateCountdown(sc, now);
+    } else {
+      $('countdown').textContent = 'Data belum tersedia';
+    }
 
     var nm = new Date(now.getTime());
     $('heroDate').innerHTML = DAYS[nm.getDay()] + '<br>' + nm.getDate() + ' ' +
@@ -183,14 +183,14 @@
       MONTHS[nm.getMonth()] + ' ' + nm.getFullYear();
     var h = hijriText(nm);
     $('dateHijri').textContent = h || '—';
-    $('zoneLabel').textContent = tzLabel();
+    $('zoneLabel').textContent = 'MYT (UTC+8)';
 
     // list
     var list = $('prayerList');
     var frag = document.createDocumentFragment();
 
     C.ORDER.forEach(function (key) {
-      var meta = C.META[key];
+      var label = C.META_LABELS[key];
       var date = sc.times[key];
       var row = document.createElement('div');
       row.className = 'prow';
@@ -208,14 +208,8 @@
       var nmEl = document.createElement('div');
       var n1 = document.createElement('div');
       n1.className = 'pname';
-      n1.textContent = meta.label;
+      n1.textContent = label;
       nmEl.appendChild(n1);
-      if (meta.sub) {
-        var n2 = document.createElement('div');
-        n2.className = 'psub';
-        n2.textContent = meta.sub;
-        nmEl.appendChild(n2);
-      }
 
       var tm = document.createElement('div');
       tm.className = 'ptime num';
@@ -230,29 +224,63 @@
     list.innerHTML = '';
     list.appendChild(frag);
 
-    // note
-    var mdesc = C.METHODS[st.method];
-    $('calcNote').innerHTML =
-      'Kaedah <b>' + (mdesc ? mdesc.name : 'Tersuai') + '</b> · Asar ' +
-      (Number(st.asrFactor) === 2 ? 'Hanafi' : "Shafi'i") +
-      ' · Ihtiyat ' + st.ihtiyat + ' min<br>' +
-      'Koordinat ' + fmtCoord(st.lat, 'N', 'S') + ', ' + fmtCoord(st.lon, 'E', 'W');
+    // nota sumber data
+    var ds = C.dataSource();
+    if (ds) {
+      $('calcNote').innerHTML =
+        'Data rasmi <b>JAKIM e-Solat ' + ds.year + '</b> · Zon <b>' + st.zone + '</b> · Masa MYT (UTC+8)';
+    } else {
+      $('calcNote').innerHTML = 'Data JAKIM belum tersedia untuk tarikh ini.';
+    }
 
     lastSignature = signature(sc);
     updateLocationLabel();
   }
 
   function signature(sc) {
-    if (!sc.next) return '';
+    if (!sc.next) return sc.missing ? 'missing' : '';
     return sc.next.key + ':' + sc.next.date.getTime();
+  }
+
+  function updateCountdown(sc, now) {
+    var el = $('cdVal');
+    if (!el || !sc.next) return;
+    var ms = sc.next.date.getTime() - now.getTime();
+    el.textContent = countdownText(ms);
+  }
+
+  function updateLocationLabel() {
+    $('locLabel').textContent = zoneText();
+  }
+
+  /* -------------------------------------------------------------- tick */
+
+  function tick() {
+    var now = new Date();
+    var sc = schedule(now);
+    if (signature(sc) !== lastSignature) {
+      renderTimes(now);
+    } else {
+      updateCountdown(sc, now);
+      // keep past/next highlighting in sync once a minute is enough
+      if (now.getSeconds() === 0) renderTimes(now);
+    }
+    var ds = now.toDateString();
+    if (ds !== lastDateStr) {
+      lastDateStr = ds;
+      renderTimes(now);
+      pushSchedule();
+      pushWidget();
+    }
+    if (currentView === 'clock') renderClock(now);
   }
 
   /* -------------------------------------------------------------- clock */
 
   function h12Parts(date) {
-    var p = C.partsOf(date);
-    var h = p.h % 12; if (h === 0) h = 12;
-    return { h: h, m: p.m, ampm: p.h < 12 ? 'AM' : 'PM', p: p };
+    var h = date.getHours();
+    var h12 = h % 12; if (h12 === 0) h12 = 12;
+    return { h: h12, m: date.getMinutes(), s: date.getSeconds(), ampm: h < 12 ? 'AM' : 'PM' };
   }
 
   function renderClock(now, force) {
@@ -271,17 +299,20 @@
       var m = h12Parts(now);
       var el = $('ckmTime');
       el.innerHTML = C.pad2(m.h) + ':' + C.pad2(m.m) +
-        '<span class="ckm-sec num">' + C.pad2(m.p.s) + '</span>';
-      var next = C.META[sc.next.key].label + (sc.next.tomorrow ? ' · esok' : '') +
-        ' pukul <b class="num">' + C.fmtTime(sc.next.date) + '</b>';
-      $('ckmNext').innerHTML = next + ' &nbsp;·&nbsp; lagi <b>' + countdownText(sc.next.date.getTime() - now.getTime()) + '</b>';
+        '<span class="ckm-sec num">' + C.pad2(m.s) + '</span>';
+      var next = sc.next
+        ? (C.META_LABELS[sc.next.key] + (sc.next.tomorrow ? ' · esok' : '') +
+          ' pukul <b class="num">' + C.fmtTime(sc.next.date) + '</b>')
+        : 'Data JAKIM belum tersedia';
+      $('ckmNext').innerHTML = next + (sc.next ? ' &nbsp;·&nbsp; lagi <b>' +
+        countdownText(sc.next.date.getTime() - now.getTime()) + '</b>' : '');
       return;
     }
 
     if (!force && sig === clockSig) {
       // kemas kini kira detik sahaja
       var cnt = $('ckCount');
-      if (cnt) cnt.textContent = countdownText(sc.next.date.getTime() - now.getTime());
+      if (cnt && sc.next) cnt.textContent = countdownText(sc.next.date.getTime() - now.getTime());
       return;
     }
     clockSig = sig;
@@ -290,12 +321,18 @@
     $('ckTime').innerHTML = C.pad2(p.h) + ':' + C.pad2(p.m) +
       '<span class="ampm">' + p.ampm + '</span>';
     var h = hijriText(now);
-    $('ckDate').textContent = DAYS[p.p.wd] + ', ' + p.p.da + ' ' + MONTHS[p.p.mo] +
-      ' ' + p.p.y + (h ? ' · ' + h : '');
+    $('ckDate').textContent = DAYS[now.getDay()] + ', ' + now.getDate() + ' ' +
+      MONTHS[now.getMonth()] + ' ' + now.getFullYear() + (h ? ' · ' + h : '');
 
-    $('ckName').textContent = C.META[sc.next.key].label + (sc.next.tomorrow ? ' · esok' : '');
-    $('ckNextAt').textContent = C.fmtTime(sc.next.date);
-    $('ckCount').textContent = countdownText(sc.next.date.getTime() - now.getTime());
+    if (sc.next) {
+      $('ckName').textContent = C.META_LABELS[sc.next.key] + (sc.next.tomorrow ? ' · esok' : '');
+      $('ckNextAt').textContent = C.fmtTime(sc.next.date);
+      $('ckCount').textContent = countdownText(sc.next.date.getTime() - now.getTime());
+    } else {
+      $('ckName').textContent = 'Data JAKIM belum tersedia';
+      $('ckNextAt').textContent = '—';
+      $('ckCount').textContent = '—';
+    }
 
     var grid = $('ckGrid');
     var frag = document.createDocumentFragment();
@@ -309,7 +346,7 @@
       }
       var k = document.createElement('div');
       k.className = 'k';
-      k.textContent = C.META[key].label;
+      k.textContent = C.META_LABELS[key];
       var t = document.createElement('div');
       t.className = 't';
       t.textContent = C.fmtTime(date);
@@ -333,9 +370,10 @@
       var events = [];
       days.forEach(function (day) {
         var times = C.computeTimes(day);
+        if (times.missing) return;
         PRAYER_KEYS.forEach(function (k) {
           if (times[k] && times[k].getTime() > now.getTime() - 60000) {
-            events.push({ key: k, label: C.META[k].label, ms: times[k].getTime() });
+            events.push({ key: k, label: C.META_LABELS[k], ms: times[k].getTime() });
           }
         });
       });
@@ -351,6 +389,7 @@
       var days = [];
       [new Date(), nextDay(new Date())].forEach(function (day) {
         var times = C.computeTimes(day);
+        if (times.missing) return;
         var t = {};
         C.ORDER.forEach(function (k) {
           t[k] = times[k] ? times[k].getTime() : 0;
@@ -361,45 +400,9 @@
         });
       });
       window.AndroidNotif.updateWidget(JSON.stringify({
-        city: C.state.city, days: days
+        city: C.state.zone, days: days
       }));
     } catch (e) {}
-  }
-
-  function updateCountdown(sc, now) {
-    var el = $('cdVal');
-    if (!el) return;
-    var ms = sc.next.date.getTime() - now.getTime();
-    el.textContent = countdownText(ms);
-  }
-
-  function updateLocationLabel() {
-    var st = C.state;
-    var label = st.city && st.city !== 'Tetapkan sendiri' ? st.city : 'Lokasi';
-    $('locLabel').textContent = label + ' · ' + fmtCoord(st.lat, 'N', 'S') + ' ' +
-      fmtCoord(st.lon, 'E', 'W');
-  }
-
-  /* -------------------------------------------------------------- tick */
-
-  function tick() {
-    var now = new Date();
-    var sc = schedule(now);
-    if (signature(sc) !== lastSignature) {
-      renderTimes(now);
-    } else {
-      updateCountdown(sc, now);
-      // keep past/next highlighting in sync once a minute is enough
-      if (now.getSeconds() === 0) renderTimes(now);
-    }
-    var ds = now.toDateString();
-    if (ds !== lastDateStr) {
-      lastDateStr = ds;
-      renderTimes(now);
-      pushSchedule();
-      pushWidget();
-    }
-    if (currentView === 'clock') renderClock(now);
   }
 
   /* ------------------------------------------------------------- qibla */
@@ -474,23 +477,31 @@
 
   function positionQibla(bearing) {
     var g = $('qiblaMark');
-    if (g) g.setAttribute('transform', 'rotate(' + bearing + ' 160 160)');
+    if (g && bearing != null) g.setAttribute('transform', 'rotate(' + bearing + ' 160 160)');
   }
 
   function renderQibla() {
     var st = C.state;
     var bearing = C.activeQiblaBearing();
-    var auto = C.qiblaBearing(st.lat, st.lon);
 
-    $('qiblaBig').innerHTML = C.fmtDegMin(bearing).replace('°', '°<span>').replace('′', '′</span>');
-    $('qiblaCap').textContent = st.qiblaMode === 'manual'
-      ? 'Mengikut bearing sijil kiblat'
-      : 'Arah kiblat dari lokasi anda';
+    if (bearing == null) {
+      $('qiblaBig').textContent = '—';
+      $('qiblaCap').textContent = 'Benarkan GPS untuk arah kiblat';
+    } else {
+      $('qiblaBig').innerHTML = C.fmtDegMin(bearing).replace('°', '°<span>').replace('′', '′</span>');
+      $('qiblaCap').textContent = st.qiblaMode === 'manual'
+        ? 'Mengikut bearing sijil kiblat'
+        : 'Arah kiblat dari GPS anda';
+    }
 
     positionQibla(bearing);
 
-    var dist = C.distanceToKaaba(st.lat, st.lon);
-    $('qDist').textContent = Math.round(dist).toLocaleString('ms-MY') + ' km';
+    if (st.gpsLat != null && st.gpsLon != null) {
+      var dist = C.distanceToKaaba(st.gpsLat, st.gpsLon);
+      $('qDist').textContent = Math.round(dist).toLocaleString('ms-MY') + ' km';
+    } else {
+      $('qDist').textContent = '—';
+    }
 
     // mode segmented control
     Array.prototype.forEach.call($('qiblaMode').children, function (b) {
@@ -500,10 +511,16 @@
     $('qDeg').value = Math.floor(C.wrap360(st.qiblaBearing));
     $('qMin').value = Math.round((C.wrap360(st.qiblaBearing) % 1) * 60) % 60;
 
-    var note = st.qiblaMode === 'manual'
-      ? 'Bearing manual: <b>' + C.fmtDegMin(st.qiblaBearing) + '</b>. Kiraan GPS untuk lokasi ini ialah ' +
-        C.fmtDegMin(auto) + ' (beza ' + (Math.abs(C.wrap180(st.qiblaBearing - auto)).toFixed(1)) + '°).'
-      : 'Dikira dari koordinat anda ke Kaabah. Tukar ke <b>Manual</b> jika sijil kiblat memberi nilai tersendiri.';
+    var note;
+    if (st.qiblaMode === 'manual') {
+      note = 'Bearing manual: <b>' + C.fmtDegMin(st.qiblaBearing) + '</b> (dari sijil kiblat).';
+    } else if (bearing == null) {
+      note = 'Tekan <b>Guna GPS</b> untuk dapat bearing kiblat lokasi anda, ' +
+             'atau tukar ke <b>Manual</b> dan masukkan nilai sijil kiblat.';
+    } else {
+      note = 'Dikira dari koordinat GPS anda ke Kaabah. Tukar ke <b>Manual</b> ' +
+             'jika sijil kiblat memberi nilai tersendiri.';
+    }
     $('qiblaNote').innerHTML = note;
 
     updateQiblaLive();
@@ -516,7 +533,7 @@
 
     var btnCompass = $('btnCompass');
 
-    if (liveHeading == null) {
+    if (bearing == null) {
       $('qDelta').textContent = '—';
       wrap.classList.remove('aligned');
       var txt = $('compassStateText');
@@ -525,21 +542,46 @@
       var showBtn = false;
       stateEl.className = 'compass-state warn';
 
-      if (!window.Compass.isSecure()) {
-        txt.textContent = 'Kompas perlukan sambungan https:// atau localhost';
+      if (st.qiblaMode === 'manual') {
+        txt.textContent = 'Guna kompas fizikal pada ' + C.fmtDegMin(st.qiblaBearing) + ' dari utara';
+      } else if (!window.Compass.isSecure()) {
+        txt.textContent = 'Kompas/GPS perlukan sambungan https:// atau localhost';
       } else if (perm === 'denied') {
-        txt.textContent = 'Akses kompas tidak dibenarkan — guna kompas fizikal pada ' +
-          C.fmtDegMin(bearing) + ' dari utara';
-      } else if (window.Compass.needsPermission() && perm !== 'granted') {
-        txt.textContent = 'Benarkan akses kompas untuk melihat arah';
-        showBtn = true;
+        txt.textContent = 'Akses kompas tidak dibenarkan — guna kompas fizikal';
       } else if (perm === 'unsupported') {
-        txt.textContent = 'Tiada sensor kompas — guna kompas fizikal pada ' +
-          C.fmtDegMin(bearing) + ' dari utara';
+        txt.textContent = 'Tiada sensor kompas — guna kompas fizikal';
       } else {
-        txt.textContent = 'Menunggu bacaan kompas…';
+        txt.textContent = 'Tekan Guna GPS untuk mulakan';
+        showBtn = true;
       }
       btnCompass.hidden = !showBtn;
+      return;
+    }
+
+    if (liveHeading == null) {
+      $('qDelta').textContent = '—';
+      wrap.classList.remove('aligned');
+      var txt2 = $('compassStateText');
+      var stateEl2 = $('compassState');
+      var perm2 = window.Compass.permission;
+      var showBtn2 = false;
+      stateEl2.className = 'compass-state warn';
+
+      if (!window.Compass.isSecure()) {
+        txt2.textContent = 'Kompas perlukan sambungan https:// atau localhost';
+      } else if (perm2 === 'denied') {
+        txt2.textContent = 'Akses kompas tidak dibenarkan — guna kompas fizikal pada ' +
+          C.fmtDegMin(bearing) + ' dari utara';
+      } else if (window.Compass.needsPermission() && perm2 !== 'granted') {
+        txt2.textContent = 'Benarkan akses kompas untuk melihat arah';
+        showBtn2 = true;
+      } else if (perm2 === 'unsupported') {
+        txt2.textContent = 'Tiada sensor kompas — guna kompas fizikal pada ' +
+          C.fmtDegMin(bearing) + ' dari utara';
+      } else {
+        txt2.textContent = 'Menunggu bacaan kompas…';
+      }
+      btnCompass.hidden = !showBtn2;
       return;
     }
 
@@ -559,8 +601,8 @@
 
     wrap.classList.toggle('aligned', abs <= 3);
 
-    var stateEl = $('compassState');
-    stateEl.className = 'compass-state live';
+    var stateEl3 = $('compassState');
+    stateEl3.className = 'compass-state live';
     $('compassStateText').textContent = 'Kompas aktif · menghadap ' +
       Math.round(heading) + '°' + (window.Compass.absolute ? ' (utara sebenar)' : '');
   }
@@ -570,91 +612,32 @@
   function syncSettings() {
     var st = C.state;
 
-    var sel = $('setCity');
+    var sel = $('setZone');
     sel.innerHTML = '';
-    var opt = document.createElement('option');
-    opt.value = ''; opt.textContent = 'Tetapkan sendiri';
-    sel.appendChild(opt);
-    C.CITIES.forEach(function (c, i) {
+    var lastState = '';
+    C.ZONES.forEach(function (z) {
+      if (z.state !== lastState) {
+        var g = document.createElement('optgroup');
+        g.label = z.state;
+        sel.appendChild(g);
+        lastState = z.state;
+      }
       var o = document.createElement('option');
-      o.value = String(i);
-      o.textContent = c.name;
+      o.value = z.code;
+      o.textContent = z.code + ' — ' + z.name;
       sel.appendChild(o);
     });
-    var idx = C.CITIES.findIndex(function (c) { return c.name === st.city; });
-    sel.value = idx >= 0 ? String(idx) : '';
-
-    $('setLat').value = st.lat.toFixed(4);
-    $('setLon').value = st.lon.toFixed(4);
-
-    $('setMethod').value = st.method;
-    $('setFajr').value = st.fajrAngle;
-    $('setIsha').value = st.ishaAngle;
-    $('setAsr').value = String(st.asrFactor);
-    $('setIhtiyat').value = st.ihtiyat;
+    sel.value = st.zone;
 
     $('setQiblaMode').value = st.qiblaMode;
     $('setQBearing').value = Number(st.qiblaBearing.toFixed(2));
     $('setQOffset').value = st.compassOffset;
 
-    $('setTzMode').value = st.tzMode;
-    $('setTz').value = st.tzOffset;
-    $('setHijri').value = String(st.hijriOffset);
     $('setClockStyle').value = st.clockStyle === 'mini' ? 'mini' : 'full';
     $('setAutoClock').value = st.autoClock ? '1' : '0';
     $('setNotify').value = st.notify ? '1' : '0';
 
-    toggleMethodRows();
-    $('rowTz').hidden = st.tzMode !== 'manual';
     applyTheme();
-  }
-
-  function buildAdjRows() {
-    var card = $('adjCard');
-    card.innerHTML = '';
-    ADJ_KEYS.forEach(function (k) {
-      var row = document.createElement('div');
-      row.className = 'field';
-      var fl = document.createElement('div');
-      fl.className = 'fl';
-      var n = document.createElement('div');
-      n.className = 'n';
-      n.textContent = C.META[k].label;
-      fl.appendChild(n);
-
-      var inp = document.createElement('input');
-      inp.type = 'number';
-      inp.step = '1';
-      inp.min = '-20';
-      inp.max = '20';
-      inp.inputMode = 'numeric';
-      inp.dataset.adj = k;
-      inp.value = C.state.adj[k] || 0;
-      inp.addEventListener('change', function () {
-        var v = parseInt(inp.value, 10);
-        if (!isFinite(v)) v = 0;
-        C.state.adj[k] = C.clamp(v, -20, 20);
-        inp.value = C.state.adj[k];
-        commit();
-      });
-
-      var unit = document.createElement('span');
-      unit.className = 'unit';
-      unit.textContent = 'min';
-
-      row.appendChild(fl);
-      row.appendChild(inp);
-      row.appendChild(unit);
-      card.appendChild(row);
-    });
-  }
-
-  function toggleMethodRows() {
-    var custom = C.state.method === 'custom';
-    $('rowFajr').hidden = !custom;
-    $('rowIsha').hidden = !custom;
-    var m = C.METHODS[C.state.method];
-    $('methodDesc').textContent = m ? m.note : 'Tetapkan sudut sendiri';
   }
 
   function commit() {
@@ -737,33 +720,24 @@
       return;
     }
     gpsBusy = true;
-    $('btnGps').classList.add('on');
     if (!silent) toast('Mencari lokasi…', 4000);
 
     navigator.geolocation.getCurrentPosition(function (pos) {
       gpsBusy = false;
-      $('btnGps').classList.remove('on');
-      var lat = pos.coords.latitude;
-      var lon = pos.coords.longitude;
-      C.state.lat = lat;
-      C.state.lon = lon;
-      var near = C.nearestCity(lat, lon);
-      C.state.city = (near.deg < 0.75) ? near.city.name : 'Lokasi semasa';
+      C.state.gpsLat = pos.coords.latitude;
+      C.state.gpsLon = pos.coords.longitude;
       C.saveState();
-      commit();
-      toast('Lokasi dikemas kini · ' + C.state.city);
+      renderQibla();
+      toast('GPS dikemas kini');
     }, function (err) {
       gpsBusy = false;
-      $('btnGps').classList.remove('on');
       var msg = 'Gagal dapat lokasi';
-      if (err.code === 1) msg = 'Kebenaran lokasi ditolak — tetapkan koordinat di Tetapan';
+      if (err.code === 1) msg = 'Kebenaran lokasi ditolak';
       else if (err.code === 2) msg = 'Lokasi tidak tersedia';
       else if (err.code === 3) msg = 'Lokasi tamat masa';
       toast(msg, 4200);
     }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 });
   }
-
-  /* ---------------------------------------------------------------- init */
 
   /* ---------------------------------------------------------- d-pad nav */
 
@@ -800,8 +774,6 @@
   }
 
   function wire() {
-    $('btnGps').addEventListener('click', function () { locate(); });
-
     $('btnClock').addEventListener('click', function () { showView('clock'); });
     $('btnClockExit').addEventListener('click', function () {
       if (pushedClock) {
@@ -861,76 +833,33 @@
       t.addEventListener('click', function () { showView(t.dataset.view); });
     });
 
-    // ---- location
-    $('setCity').addEventListener('change', function () {
-      var v = this.value;
-      if (v === '') return;
-      var c = C.CITIES[Number(v)];
-      if (!c) return;
-      C.state.city = c.name;
-      C.state.lat = c.lat;
-      C.state.lon = c.lon;
+    // ---- zon JAKIM
+    $('setZone').addEventListener('change', function () {
+      C.state.zone = this.value;
       commit();
-    });
-    $('setLat').addEventListener('change', function () {
-      var v = parseFloat(this.value);
-      if (!isFinite(v) || v < -90 || v > 90) { this.value = C.state.lat.toFixed(4); return; }
-      C.state.lat = v;
-      C.state.city = 'Tetapkan sendiri';
-      commit();
-    });
-    $('setLon').addEventListener('change', function () {
-      var v = parseFloat(this.value);
-      if (!isFinite(v) || v < -180 || v > 180) { this.value = C.state.lon.toFixed(4); return; }
-      C.state.lon = v;
-      C.state.city = 'Tetapkan sendiri';
-      commit();
-    });
-    $('btnUseGps').addEventListener('click', function () { locate(); });
-    $('btnSaveLoc').addEventListener('click', function () {
-      var la = parseFloat($('setLat').value);
-      var lo = parseFloat($('setLon').value);
-      if (isFinite(la) && isFinite(lo) && la >= -90 && la <= 90 && lo >= -180 && lo <= 180) {
-        C.state.lat = la; C.state.lon = lo; C.state.city = 'Tetapkan sendiri';
-        commit();
-        toast('Koordinat disimpan');
-      } else {
-        toast('Koordinat tidak sah');
-      }
+      toast('Zon: ' + zoneText());
     });
 
-    // ---- calculation
-    $('setMethod').addEventListener('change', function () {
-      C.state.method = this.value;
-      var m = C.METHODS[this.value];
-      if (m) {
-        if (m.fajr != null) C.state.fajrAngle = m.fajr;
-        if (m.isha != null) C.state.ishaAngle = m.isha;
-      }
-      C.state.asrFactor = Number($('setAsr').value) || 1;
-      commit();
-    });
-    $('setFajr').addEventListener('change', function () {
-      var v = parseFloat(this.value);
-      if (isFinite(v) && v >= 0 && v <= 30) { C.state.fajrAngle = v; commit(); }
-      else { this.value = C.state.fajrAngle; }
-    });
-    $('setIsha').addEventListener('change', function () {
-      var v = parseFloat(this.value);
-      if (isFinite(v) && v >= 0 && v <= 30) { C.state.ishaAngle = v; commit(); }
-      else { this.value = C.state.ishaAngle; }
-    });
-    $('setAsr').addEventListener('change', function () {
-      C.state.asrFactor = Number(this.value) || 1;
-      commit();
-    });
-    $('setIhtiyat').addEventListener('change', function () {
-      var v = parseInt(this.value, 10);
-      C.state.ihtiyat = isFinite(v) ? C.clamp(v, 0, 10) : 2;
-      commit();
+    // ---- kemas kini data JAKIM
+    $('btnRefresh').addEventListener('click', function () {
+      var btn = this;
+      var z = C.state.zone;
+      btn.disabled = true;
+      $('refreshStatus').textContent = 'Memuat turun data JAKIM ' + z + '…';
+      C.refreshZone(z, function (err, n) {
+        btn.disabled = false;
+        if (err) {
+          $('refreshStatus').textContent = 'Gagal — semak sambungan internet.';
+          toast('Gagal kemas kini: ' + err.message, 4200);
+        } else {
+          $('refreshStatus').textContent = 'Data terkini dimuat (' + n + ' hari).';
+          toast('Data JAKIM dikemas kini');
+          commit();
+        }
+      });
     });
 
-    // ---- qibla settings
+    // ---- kiblat settings
     $('setQiblaMode').addEventListener('change', function () {
       C.state.qiblaMode = this.value;
       commit();
@@ -948,22 +877,8 @@
       updateQiblaLive();
     });
 
-    // ---- display
-    $('setTzMode').addEventListener('change', function () {
-      C.state.tzMode = this.value;
-      $('rowTz').hidden = this.value !== 'manual';
-      commit();
-    });
-    $('setTz').addEventListener('change', function () {
-      var v = parseFloat(this.value);
-      C.state.tzOffset = isFinite(v) ? C.clamp(v, -12, 14) : 8;
-      this.value = C.state.tzOffset;
-      commit();
-    });
-    $('setHijri').addEventListener('change', function () {
-      C.state.hijriOffset = parseInt(this.value, 10) || 0;
-      commit();
-    });
+    // ---- GPS (untuk kiblat)
+    $('btnUseGps').addEventListener('click', function () { locate(); });
 
     // ---- mod jam & notifikasi
     $('setClockStyle').addEventListener('change', function () {
@@ -990,32 +905,10 @@
       });
     });
 
-    // ---- install sebagai PWA
-    var installPrompt = null;
-    window.addEventListener('beforeinstallprompt', function (e) {
-      e.preventDefault();
-      installPrompt = e;
-      $('installRow').hidden = false;
-    });
-    $('btnInstall').addEventListener('click', function () {
-      if (!installPrompt) { toast('Guna menu pelayar → Pasang app'); return; }
-      installPrompt.prompt();
-      installPrompt.userChoice.then(function () {
-        installPrompt = null;
-        $('installRow').hidden = true;
-      });
-    });
-    window.addEventListener('appinstalled', function () {
-      installPrompt = null;
-      $('installRow').hidden = true;
-      toast('App dipasang');
-    });
-
     // ---- reset
     $('btnReset').addEventListener('click', function () {
       if (!confirm('Set semula semua tetapan kepada asal?')) return;
       C.resetState();
-      buildAdjRows();
       syncSettings();
       renderTimes(new Date());
       renderQibla();
@@ -1061,7 +954,7 @@
 
   function init() {
     var hadSave = false;
-    try { hadSave = !!localStorage.getItem('waktu-solat/v1'); } catch (e) {}
+    try { hadSave = !!localStorage.getItem('waktu-solat/v2') || !!localStorage.getItem('waktu-solat/v1'); } catch (e) {}
 
     C.loadState();
 
@@ -1076,7 +969,6 @@
 
     applyTheme();
     buildDial();
-    buildAdjRows();
     syncSettings();
     wire();
 
@@ -1089,8 +981,6 @@
     tick();
     pushSchedule();
     pushWidget();
-
-    if (!hadSave && startView !== 'clock') setTimeout(function () { locate(true); }, 800);
 
     if ('serviceWorker' in navigator && isSecure()) {
       navigator.serviceWorker.register('sw.js').catch(function () {});

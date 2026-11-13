@@ -1,9 +1,10 @@
 /* Service worker — offline app shell */
-const CACHE = 'waktu-solat-v6';
+const CACHE = 'waktu-solat-v7';
 const ASSETS = [
   './',
   './index.html',
   './app.css',
+  './js/jakim-data.js',
   './js/core.js',
   './js/compass.js',
   './js/ui.js',

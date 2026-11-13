@@ -39,7 +39,7 @@
       </div>
       <div class="txt">
         <div class="t1">Waktu Solat</div>
-        <div class="t2" id="locLabel">Menentukan lokasi…</div>
+        <div class="t2" id="locLabel">Waktu Solat</div>
       </div>
     </div>
     <button class="iconbtn" id="btnClock" aria-label="Mod Jam" title="Mod Jam (paparan TV)">
@@ -47,13 +47,6 @@
         <circle cx="12" cy="12" r="9"/>
         <path d="M12 7.5V12l3.5 2"/>
         <path d="M12 3v2M12 19v2M3 12h2M19 12h2"/>
-      </svg>
-    </button>
-    <button class="iconbtn" id="btnGps" aria-label="Kemas kini lokasi GPS" title="Lokasi GPS">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="3.2"/>
-        <path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3"/>
-        <circle cx="12" cy="12" r="8"/>
       </svg>
     </button>
   </header>
@@ -169,6 +162,10 @@
         <button data-mode="manual">Manual (sijil)</button>
       </div>
 
+      <div class="btnrow">
+        <button class="btn primary" id="btnUseGps">Guna GPS</button>
+      </div>
+
       <div class="bearing-input" id="bearingBox" hidden>
         <div class="grp">
           <div>
@@ -193,80 +190,29 @@
     <!-- ================= TETAPAN ================= -->
     <section class="view" id="view-settings">
 
-      <div class="shead">Lokasi</div>
+      <div class="shead">Zon JAKIM</div>
       <div class="card scard">
         <div class="field">
           <div class="fl">
-            <div class="n">Bandar</div>
-            <div class="d">Pilih untuk tetapkan koordinat pantas</div>
+            <div class="n">Zon waktu solat</div>
+            <div class="d">Ikut zon rasmi e-Solat JAKIM</div>
           </div>
-          <select id="setCity"></select>
+          <select id="setZone"></select>
         </div>
+      </div>
+
+      <div class="shead">Data JAKIM</div>
+      <div class="card scard">
         <div class="field">
-          <div class="fl"><div class="n">Latitud</div></div>
-          <input id="setLat" type="number" step="0.0001" inputmode="decimal">
-          <span class="unit">°N</span>
-        </div>
-        <div class="field">
-          <div class="fl"><div class="n">Longitud</div></div>
-          <input id="setLon" type="number" step="0.0001" inputmode="decimal">
-          <span class="unit">°E</span>
+          <div class="fl">
+            <div class="n">Kemas kini data</div>
+            <div class="d" id="refreshStatus">Muat turun data terkini untuk zon ini (perlu internet)</div>
+          </div>
         </div>
         <div class="btnrow">
-          <button class="btn primary" id="btnUseGps">Guna GPS</button>
-          <button class="btn ghost" id="btnSaveLoc">Simpan koordinat</button>
+          <button class="btn primary" id="btnRefresh">Kemas kini sekarang</button>
         </div>
       </div>
-
-      <div class="shead">Pengiraan</div>
-      <div class="card scard">
-        <div class="field">
-          <div class="fl">
-            <div class="n">Kaedah</div>
-            <div class="d" id="methodDesc">JAKIM — Subuh 18°, Isyak 18°</div>
-          </div>
-          <select id="setMethod">
-            <option value="jakim">JAKIM (Malaysia)</option>
-            <option value="mwl">Muslim World League</option>
-            <option value="isna">ISNA (Amerika)</option>
-            <option value="egypt">Mesir</option>
-            <option value="karachi">Karachi</option>
-            <option value="makkah">Umm al-Qura</option>
-            <option value="custom">Tersuai</option>
-          </select>
-        </div>
-        <div class="field" id="rowFajr" hidden>
-          <div class="fl"><div class="n">Sudut Subuh</div></div>
-          <input id="setFajr" type="number" step="0.1" inputmode="decimal">
-          <span class="unit">°</span>
-        </div>
-        <div class="field" id="rowIsha" hidden>
-          <div class="fl"><div class="n">Sudut Isyak</div></div>
-          <input id="setIsha" type="number" step="0.1" inputmode="decimal">
-          <span class="unit">°</span>
-        </div>
-        <div class="field">
-          <div class="fl">
-            <div class="n">Mazhab Asar</div>
-            <div class="d">Shafi'i: bayang = 1× objek</div>
-          </div>
-          <select id="setAsr">
-            <option value="1">Shafi'i</option>
-            <option value="2">Hanafi</option>
-          </select>
-        </div>
-        <div class="field">
-          <div class="fl">
-            <div class="n">Ihtiyat</div>
-            <div class="d">Tambah minit berhati-hati pada waktu solat</div>
-          </div>
-          <input id="setIhtiyat" type="number" min="0" max="10" step="1" inputmode="numeric">
-          <span class="unit">min</span>
-        </div>
-      </div>
-
-      <div class="shead">Pelarasan ikut waktu</div>
-      <div class="card scard" id="adjCard"></div>
 
       <div class="shead">Kiblat</div>
       <div class="card scard">
@@ -313,21 +259,6 @@
         </div>
         <div class="field">
           <div class="fl">
-            <div class="n">Zon waktu</div>
-            <div class="d">Ikut peranti atau tetapkan sendiri</div>
-          </div>
-          <select id="setTzMode">
-            <option value="device">Ikut peranti</option>
-            <option value="manual">Tetap</option>
-          </select>
-        </div>
-        <div class="field" id="rowTz" hidden>
-          <div class="fl"><div class="n">UTC</div></div>
-          <input id="setTz" type="number" step="0.5" min="-12" max="14" inputmode="decimal">
-          <span class="unit">j</span>
-        </div>
-        <div class="field">
-          <div class="fl">
             <div class="n">Gaya jam</div>
             <div class="d">Paparan Mod Jam di TV</div>
           </div>
@@ -344,17 +275,6 @@
           <select id="setAutoClock">
             <option value="1">Ya</option>
             <option value="0">Tidak</option>
-          </select>
-        </div>
-        <div class="field">
-          <div class="fl">
-            <div class="n">Hijri</div>
-            <div class="d">Takwim JAKIM (Imkanur Rukyah)</div>
-          </div>
-          <select id="setHijri">
-            <option value="-1">−1 hari</option>
-            <option value="0">Ikut takwim</option>
-            <option value="1">+1 hari</option>
           </select>
         </div>
       </div>
@@ -388,10 +308,10 @@
       </div>
 
       <p class="note" style="margin-top:18px">
-        Waktu dikira secara astronomi pada peranti anda (tiada internet diperlukan).
-        Jadual takwim rasmi JAKIM boleh berbeza ±1–2 minit kerana pembundaran dan
-        koordinat rujukan. Gunakan <b>Pelarasan ikut waktu</b> untuk memadankan
-        dengan surau atau zon anda.
+        Waktu solat diambil <b>bulat-bulat daripada data rasmi JAKIM (e-Solat)</b> —
+        tiada pengiraan, tiada pelarasan. Data zon yang dipilih dipaparkan
+        seperti diterbitkan, dalam masa Malaysia (UTC+8). Data boleh dikemas
+        kini dalam talian apabila JAKIM menerbitkan tahun baharu.
       </p>
     </section>
 
@@ -431,6 +351,7 @@
 
 <div class="toast" id="toast"></div>
 
+<script src="js/jakim-data.js"></script>
 <script src="js/core.js"></script>
 <script src="js/compass.js"></script>
 <script src="js/ui.js"></script>
