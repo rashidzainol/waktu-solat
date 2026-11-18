@@ -6,8 +6,11 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <!-- Notifikasi waktu solat -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <!-- Alarm tepat untuk waktu solat (dibenarkan automatik untuk app waktu/alarm) -->
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <!-- Kemas kini app dari dalam app (APK dari GitHub Releases) -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
@@ -53,12 +56,22 @@
                 android:resource="@xml/widget_info" />
         </receiver>
 
-        <!-- Alarm waktu solat -->
-        <receiver android:name=".NotifReceiver" android:exported="false" />
+        <!-- Alarm waktu solat + penyelenggaraan harian -->
+        <receiver android:name=".NotifReceiver" android:exported="false">
+            <intent-filter>
+                <action android:name="my.rashidzainol.waktusolat.FIRE" />
+                <action android:name="my.rashidzainol.waktusolat.MAINTAIN" />
+            </intent-filter>
+        </receiver>
 
+        <!-- Jadual semula selepas reboot / tukar masa / app dikemas kini -->
         <receiver android:name=".BootReceiver" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
             </intent-filter>
         </receiver>
 

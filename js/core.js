@@ -99,6 +99,7 @@
     gpsLat: null,             // koordinat GPS terakhir (untuk kiblat)
     gpsLon: null,
     notify: true,
+    notifyKeys: ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'],
     autoClock: false,
     clockStyle: 'full'
   };
@@ -120,6 +121,14 @@
         // zon luar senarai → lalai
         var ok = ZONES.some(function (z) { return z.code === base.zone; });
         if (!ok) base.zone = DEFAULTS.zone;
+        // senarai waktu notifikasi mesti array sah
+        if (!Array.isArray(base.notifyKeys)) {
+          base.notifyKeys = DEFAULTS.notifyKeys.slice();
+        } else {
+          base.notifyKeys = base.notifyKeys.filter(function (k) {
+            return DEFAULTS.notifyKeys.indexOf(k) >= 0;
+          });
+        }
       } catch (e) { /* ignore corrupt storage */ }
     }
     state = base;

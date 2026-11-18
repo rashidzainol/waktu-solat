@@ -13,6 +13,34 @@
 
   var PRAYER_KEYS = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
 
+  var RING_LEN = 326.73; // 2π × 52
+
+  var SUBS = {
+    imsak: 'Sebelum fajar',
+    fajr: 'Fajar',
+    syuruk: 'Matahari terbit',
+    dhuha: 'Duha',
+    dhuhr: 'Zohor',
+    asr: 'Petang',
+    maghrib: 'Matahari terbenam',
+    isha: 'Malam'
+  };
+
+  // Ikon garis 24×24 untuk setiap waktu (inline, tiada aset tambahan).
+  var ICONS = {
+    imsak: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z"/>',
+    fajr: '<path d="M3 18h18"/><path d="M7 18a5 5 0 0 1 10 0"/><path d="M12 3.5V7"/><path d="M5.4 7.4 7 9"/><path d="M18.6 7.4 17 9"/>',
+    syuruk: '<path d="M3 18h18"/><path d="M12 14V5"/><path d="m8 9 4-4 4 4"/><path d="M7 18a5 5 0 0 1 10 0" opacity=".35"/>',
+    dhuha: '<circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.4M12 19.6V22M2 12h2.4M19.6 12H22M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M19.1 4.9l-1.7 1.7M6.6 17.4l-1.7 1.7"/>',
+    dhuhr: '<circle cx="12" cy="12" r="4"/><path d="M12 4V2.5M12 21.5V20M4 12H2.5M21.5 12H20"/>',
+    asr: '<circle cx="15.5" cy="9" r="3.5"/><path d="M15.5 3.5V2M21 9h1.5M19.6 4.9 20.7 3.8M20.7 14.1l1.1 1.1"/><path d="M3 18h18"/><path d="M5.5 15.5 7 14"/>',
+    maghrib: '<path d="M3 18h18"/><path d="M12 15V6"/><path d="m8 10 4 4 4-4"/><path d="M7 18a5 5 0 0 1 10 0" opacity=".35"/>',
+    isha: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z"/><path d="M16.8 4.4 17.5 6l1.6.7-1.6.7-.7 1.6-.7-1.6L14.5 6.7 16.1 6z"/>'
+  };
+
+  var NOTIFY_KEYS = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
+  var DAYS_AHEAD = 120; // jadual alarm dihantar ke Android (hari)
+
   var THEMES = {
     dark:    { label: 'Gelap',     bar: '#070d0b', light: false },
     light:   { label: 'Terang',    bar: '#f3f6f3', light: true  },
@@ -151,72 +179,116 @@
       if (events[j].date <= now) { current = events[j]; break; }
     }
 
-    return { times: times, events: events, next: next, current: current,
+    // Waktu terakhir yang sudah berlalu (untuk progres cincin).
+    var prev = current;
+    if (!prev) {
+      var yTimes = C.computeTimes(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 12, 0, 0));
+      if (yTimes.isha) prev = { key: 'isha', date: yTimes.isha };
+    }
+
+    return { times: times, events: events, next: next, current: current, prev: prev,
              tomorrowTimes: tomorrowTimes, missing: !!times.missing };
   }
 
   /* -------------------------------------------------------------- render */
 
+  function ringProgress(sc, now) {
+    if (!sc.next) return 0;
+    var end = sc.next.date.getTime();
+    var start = sc.prev ? sc.prev.date.getTime() : end - 6 * 3600000;
+    if (end <= start) return 0;
+    return Math.min(1, Math.max(0, (now.getTime() - start) / (end - start)));
+  }
+
+  function updateRing(sc, now) {
+    var el = $('ringFill');
+    if (!el) return;
+    el.style.strokeDashoffset = String(RING_LEN * (1 - ringProgress(sc, now)));
+  }
+
+  function badge(text) {
+    var b = document.createElement('span');
+    b.className = 'tbadge';
+    b.textContent = text;
+    return b;
+  }
+
   function renderTimes(now) {
     var sc = schedule(now);
     var st = C.state;
 
-    // hero
-    var name = sc.next ? C.META_LABELS[sc.next.key] : '—';
+    // ---- cincin kira detik
     $('heroEyebrow').textContent = sc.next
       ? (sc.next.tomorrow ? 'Seterusnya · esok' : 'Seterusnya')
       : 'Data JAKIM';
-    $('nextName').textContent = name;
-    $('nextTime').textContent = sc.next ? C.fmtTime(sc.next.date) : '—';
-    if (sc.next) {
-      $('countdown').innerHTML = 'lagi <b id="cdVal"></b>';
-      updateCountdown(sc, now);
-    } else {
-      $('countdown').textContent = 'Data belum tersedia';
-    }
+    $('nextName').textContent = sc.next ? C.META_LABELS[sc.next.key] : '—';
+    $('nextTime').textContent = sc.next ? C.fmtTime(sc.next.date) : '--:--';
+    $('cdVal').textContent = sc.next
+      ? countdownText(sc.next.date.getTime() - now.getTime())
+      : '—';
+    updateRing(sc, now);
 
+    // ---- maklumat hari
     var nm = new Date(now.getTime());
-    $('heroDate').innerHTML = DAYS[nm.getDay()] + '<br>' + nm.getDate() + ' ' +
-      MONTHS[nm.getMonth()] + ' ' + nm.getFullYear();
-
-    $('dateMiladi').textContent = DAYS[nm.getDay()] + ', ' + nm.getDate() + ' ' +
+    $('heroDate').textContent = DAYS[nm.getDay()] + ', ' + nm.getDate() + ' ' +
       MONTHS[nm.getMonth()] + ' ' + nm.getFullYear();
     var h = hijriText(nm);
-    $('dateHijri').textContent = h || '—';
-    $('zoneLabel').textContent = 'MYT (UTC+8)';
+    $('heroHijri').textContent = h || '—';
+    $('zoneLabel').textContent = zoneText();
 
-    // list
+    // ---- segmen semasa (selepas waktu mana)
+    if (sc.current) {
+      $('currentLabel').textContent = 'Selepas ' + C.META_LABELS[sc.current.key] +
+        ' · ' + C.fmtTime(sc.current.date);
+    } else {
+      $('currentLabel').textContent = 'Sebelum ' + (sc.next ? C.META_LABELS[sc.next.key] : 'Subuh');
+    }
+
+    // ---- timeline
     var list = $('prayerList');
     var frag = document.createDocumentFragment();
 
     C.ORDER.forEach(function (key) {
-      var label = C.META_LABELS[key];
       var date = sc.times[key];
       var row = document.createElement('div');
-      row.className = 'prow';
+      row.className = 'trow';
       row.dataset.key = key;
 
-      if (date) {
-        if (sc.next && sc.next.key === key && !sc.next.tomorrow) row.classList.add('is-next');
-        else if (date < now) row.classList.add('is-past');
-      }
-      if (sc.current && sc.current.key === key) row.classList.add('is-now');
+      var isNext = !!(sc.next && sc.next.key === key && !sc.next.tomorrow);
+      var isNow = !!(sc.current && sc.current.key === key);
 
-      var dot = document.createElement('span');
-      dot.className = 'pdot';
+      if (isNext) row.classList.add('is-next');
+      else if (date && date < now) row.classList.add('is-past');
+      if (isNow) row.classList.add('is-now');
 
-      var nmEl = document.createElement('div');
+      var mark = document.createElement('div');
+      mark.className = 'tmark';
+      mark.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+        'stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">' +
+        (ICONS[key] || '') + '</svg>';
+
+      var main = document.createElement('div');
+      main.className = 'tmain';
+
       var n1 = document.createElement('div');
-      n1.className = 'pname';
-      n1.textContent = label;
-      nmEl.appendChild(n1);
+      n1.className = 'tname';
+      n1.appendChild(document.createTextNode(C.META_LABELS[key]));
+      if (isNext) n1.appendChild(badge('Seterusnya'));
+      else if (isNow) n1.appendChild(badge('Kini'));
+
+      var sub = document.createElement('div');
+      sub.className = 'tsub';
+      sub.textContent = SUBS[key] || '';
+
+      main.appendChild(n1);
+      main.appendChild(sub);
 
       var tm = document.createElement('div');
-      tm.className = 'ptime num';
+      tm.className = 'ttime num';
       tm.textContent = C.fmtTime(date);
 
-      row.appendChild(dot);
-      row.appendChild(nmEl);
+      row.appendChild(mark);
+      row.appendChild(main);
       row.appendChild(tm);
       frag.appendChild(row);
     });
@@ -244,9 +316,10 @@
 
   function updateCountdown(sc, now) {
     var el = $('cdVal');
-    if (!el || !sc.next) return;
-    var ms = sc.next.date.getTime() - now.getTime();
-    el.textContent = countdownText(ms);
+    if (el && sc.next) {
+      el.textContent = countdownText(sc.next.date.getTime() - now.getTime());
+    }
+    updateRing(sc, now);
   }
 
   function updateLocationLabel() {
@@ -360,26 +433,201 @@
 
   /* -------------------------------------------------- notifikasi (APK) */
 
-  function pushSchedule() {
+  function nativeNotif() {
     try {
-      if (!window.AndroidNotif || !window.AndroidNotif.schedule) return;
-      if (!C.state.notify) { window.AndroidNotif.cancel(); return; }
+      return (window.AndroidNotif && window.AndroidNotif.schedule) ? window.AndroidNotif : null;
+    } catch (e) { return null; }
+  }
+
+  function notifyKeys() {
+    var keys = C.state.notifyKeys;
+    if (!Array.isArray(keys)) return PRAYER_KEYS.slice();
+    return keys.filter(function (k) { return NOTIFY_KEYS.indexOf(k) >= 0; });
+  }
+
+  function nativeStatus() {
+    var A = nativeNotif();
+    if (!A || typeof A.status !== 'function') return null;
+    try { return JSON.parse(A.status()); } catch (e) { return null; }
+  }
+
+  /**
+   * Hantar jadual 120 hari ke Android. Java menyimpannya dan menjadualkan
+   * semula sendiri selepas setiap notifikasi / reboot / kemas kini app,
+   * jadi notifikasi tidak putus walaupun app tidak dibuka.
+   */
+  function pushSchedule() {
+    var A = nativeNotif();
+    if (!A) return;
+
+    try {
+      var keys = notifyKeys();
+      if (!C.state.notify || !keys.length) {
+        A.cancel();
+        refreshNotifUI();
+        return;
+      }
 
       var now = new Date();
-      var days = [now, nextDay(now)];
       var events = [];
-      days.forEach(function (day) {
+
+      for (var i = 0; i < DAYS_AHEAD; i++) {
+        var day = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i, 12, 0, 0);
         var times = C.computeTimes(day);
-        if (times.missing) return;
-        PRAYER_KEYS.forEach(function (k) {
-          if (times[k] && times[k].getTime() > now.getTime() - 60000) {
-            events.push({ key: k, label: C.META_LABELS[k], ms: times[k].getTime() });
+        if (times.missing) break;
+        for (var j = 0; j < keys.length; j++) {
+          var k = keys[j];
+          var d = times[k];
+          if (d && d.getTime() > now.getTime() + 1000) {
+            events.push({ key: k, label: C.META_LABELS[k], ms: d.getTime() });
           }
-        });
-      });
-      window.AndroidNotif.schedule(JSON.stringify(events));
+        }
+      }
+
+      events.sort(function (a, b) { return a.ms - b.ms; });
+      A.schedule(JSON.stringify(events));
+      refreshNotifUI();
     } catch (e) {}
   }
+
+  function refreshNotifUI() {
+    var A = nativeNotif();
+    var st = C.state;
+    var keys = notifyKeys();
+
+    // suis utama
+    var sw = $('setNotify');
+    if (sw) {
+      sw.setAttribute('aria-checked', st.notify ? 'true' : 'false');
+      sw.disabled = !A;
+    }
+
+    // cip per waktu
+    var chips = $('notifyChips');
+    if (chips) {
+      Array.prototype.forEach.call(chips.children, function (b) {
+        b.setAttribute('aria-pressed', keys.indexOf(b.dataset.key) >= 0 ? 'true' : 'false');
+      });
+    }
+
+    var statusEl = $('notifStatus');
+    var textEl = $('notifStatusText');
+    var permBtn = $('btnNotifPerm');
+    var testBtn = $('btnTestNotif');
+    var hasStatus = !!A && typeof A.status === 'function';
+    var s = nativeStatus();
+
+    if (statusEl) statusEl.className = 'notif-status';
+    if (permBtn) permBtn.hidden = true;
+    if (testBtn) testBtn.hidden = !A || !st.notify;
+
+    // PWA / pelayar: tiada jambatan Android.
+    if (!A) {
+      if (statusEl) statusEl.classList.add('warn');
+      if (textEl) textEl.textContent = 'Notifikasi hanya tersedia dalam app Android (APK).';
+      if (sw) sw.hidden = true;
+      if ($('notifPickRow')) $('notifPickRow').hidden = true;
+      if (chips) chips.hidden = true;
+      if (permBtn) permBtn.hidden = true;
+      if (testBtn) testBtn.hidden = true;
+      updateBell();
+      return;
+    }
+
+    if (sw) sw.hidden = false;
+    if ($('notifPickRow')) $('notifPickRow').hidden = false;
+    if (chips) chips.hidden = false;
+
+    if (!st.notify) {
+      if (textEl) textEl.textContent = 'Notifikasi dimatikan.';
+      updateBell();
+      return;
+    }
+
+    if (!keys.length) {
+      if (statusEl) statusEl.classList.add('warn');
+      if (textEl) textEl.textContent = 'Tiada waktu dipilih — notifikasi tidak akan berbunyi.';
+      updateBell();
+      return;
+    }
+
+    if (!s) {
+      if (!hasStatus) {
+        if (statusEl) statusEl.classList.add('ok');
+        if (textEl) textEl.textContent = 'Notifikasi aktif untuk ' + keys.length + ' waktu sehari.';
+      } else {
+        if (statusEl) statusEl.classList.add('warn');
+        if (textEl) textEl.textContent = 'Tidak dapat membaca status notifikasi.';
+      }
+      updateBell();
+      return;
+    }
+
+    if (!s.permission) {
+      if (statusEl) statusEl.classList.add('err');
+      if (textEl) textEl.textContent = 'Kebenaran notifikasi belum dibenarkan — notifikasi tidak akan keluar.';
+      if (permBtn) { permBtn.hidden = false; permBtn.textContent = 'Benarkan'; }
+      updateBell();
+      return;
+    }
+
+    if (!s.enabled) {
+      if (statusEl) statusEl.classList.add('err');
+      if (textEl) textEl.textContent = 'Notifikasi disekat dalam tetapan Android.';
+      if (permBtn) { permBtn.hidden = false; permBtn.textContent = 'Buka tetapan'; }
+      updateBell();
+      return;
+    }
+
+    if (statusEl) statusEl.classList.add('ok');
+    if (textEl) {
+      textEl.textContent = s.exact === false
+        ? 'Notifikasi aktif untuk ' + keys.length + ' waktu · masa mungkin lewat sedikit pada peranti ini.'
+        : 'Notifikasi aktif untuk ' + keys.length + ' waktu sehari.';
+    }
+    updateBell();
+  }
+
+  function updateBell() {
+    var dot = $('bellDot');
+    var btn = $('btnBell');
+    var A = nativeNotif();
+    var s = nativeStatus();
+    var canCheck = !!A && typeof A.status === 'function';
+    var warn = canCheck && C.state.notify &&
+      (!s || !s.permission || !s.enabled || !notifyKeys().length);
+    if (dot) dot.hidden = !warn;
+    if (btn) btn.classList.toggle('on', !!A && C.state.notify && !warn);
+  }
+
+  function askNotifPermission() {
+    var A = nativeNotif();
+    if (!A || typeof A.requestPermission !== 'function') return;
+    try { A.requestPermission(); } catch (e) {}
+    // Semak semula selepas pengguna kembali dari dialog/tetapan Android.
+    setTimeout(function () { refreshNotifUI(); pushSchedule(); }, 1200);
+  }
+
+  function testNotif() {
+    var A = nativeNotif();
+    if (!A || typeof A.testNotification !== 'function') {
+      toast('Ujian hanya tersedia dalam app Android');
+      return;
+    }
+    try {
+      A.testNotification('Subuh');
+      toast('Notifikasi ujian dihantar', 3600);
+    } catch (e) {
+      toast('Gagal hantar notifikasi ujian');
+    }
+    setTimeout(refreshNotifUI, 700);
+  }
+
+  // Dipanggil dari Android selepas dialog kebenaran ditutup.
+  window.__notifChanged = function () {
+    refreshNotifUI();
+    if (C.state.notify) pushSchedule();
+  };
 
   /* ------------------------------------------------------ widget (APK) */
 
@@ -635,9 +883,9 @@
 
     $('setClockStyle').value = st.clockStyle === 'mini' ? 'mini' : 'full';
     $('setAutoClock').value = st.autoClock ? '1' : '0';
-    $('setNotify').value = st.notify ? '1' : '0';
 
     applyTheme();
+    refreshNotifUI();
   }
 
   function commit() {
@@ -820,8 +1068,18 @@
       }
     });
 
-    document.querySelector('.brand').addEventListener('click', function () {
+    $('brand').addEventListener('click', function () {
+      showView('times');
+    });
+
+    $('btnBell').addEventListener('click', function () {
       showView('settings');
+      var card = $('notifCard');
+      if (card) {
+        setTimeout(function () {
+          card.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        }, 60);
+      }
     });
 
     $('btnCompass').addEventListener('click', function () {
@@ -890,10 +1148,41 @@
       C.state.autoClock = this.value === '1';
       commit();
     });
-    $('setNotify').addEventListener('change', function () {
-      C.state.notify = this.value === '1';
-      commit();
+    $('setNotify').addEventListener('click', function () {
+      C.state.notify = !C.state.notify;
+      C.saveState();
+      pushSchedule();
+      if (C.state.notify && nativeNotif()) askNotifPermission();
       toast(C.state.notify ? 'Notifikasi waktu solat dihidupkan' : 'Notifikasi dimatikan');
+    });
+
+    $('btnNotifPerm').addEventListener('click', function () {
+      var s = nativeStatus();
+      var A = nativeNotif();
+      if (A && s && s.permission && !s.enabled && A.openSettings) {
+        try { A.openSettings(); } catch (e) {}
+      } else {
+        askNotifPermission();
+      }
+    });
+
+    $('btnTestNotif').addEventListener('click', testNotif);
+
+    Array.prototype.forEach.call($('notifyChips').children, function (b) {
+      b.addEventListener('click', function () {
+        var key = b.dataset.key;
+        var keys = notifyKeys();
+        var i = keys.indexOf(key);
+        if (i >= 0) keys.splice(i, 1); else keys.push(key);
+        // kekalkan susunan standard
+        keys.sort(function (a, c) {
+          return NOTIFY_KEYS.indexOf(a) - NOTIFY_KEYS.indexOf(c);
+        });
+        C.state.notifyKeys = keys;
+        C.saveState();
+        refreshNotifUI();
+        pushSchedule();
+      });
     });
 
     // ---- theme
@@ -912,6 +1201,8 @@
       syncSettings();
       renderTimes(new Date());
       renderQibla();
+      pushSchedule();
+      pushWidget();
       toast('Tetapan diset semula');
     });
 
@@ -951,10 +1242,14 @@
     });
 
     document.addEventListener('visibilitychange', function () {
-      if (!document.hidden && currentView === 'qibla') {
+      if (document.hidden) return;
+      if (currentView === 'qibla') {
         window.Compass.start();
         acquireWake();
       }
+      // App dibuka semula: segarkan status kebenaran & jadual alarm.
+      refreshNotifUI();
+      pushSchedule();
     });
   }
 

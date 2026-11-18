@@ -86,6 +86,28 @@ automatik; butang **Kemas kini sekarang** memaksa semakan + muat semula.
 
 ---
 
+## Notifikasi waktu solat
+
+Notifikasi berfungsi dalam **APK Android** (bukan dalam pelayar). Tetapan di
+**Tetapan → Notifikasi**:
+
+- **Suis utama** — hidup/matikan semua notifikasi waktu solat.
+- **Waktu yang berbunyi** — pilih Subuh, Zohor, Asar, Maghrib dan/atau Isyak.
+- **Status** — app menunjukkan sama ada kebenaran notifikasi sudah diberi.
+  Jika belum, tekan **Benarkan** (Android 13+ akan bertanya sekali).
+- **Uji notifikasi** — hantar notifikasi contoh serta-merta untuk semakan.
+
+App menghantar jadual **120 hari** ke Android. Java menyimpannya dan
+menjadualkan semula sendiri selepas setiap notifikasi, reboot, perubahan
+masa/zon waktu, atau kemas kini app — jadi notifikasi tidak putus walaupun
+app tidak dibuka. Selepas 31 Disember, kemas kini data JAKIM untuk tahun
+baharu supaya jadual diteruskan.
+
+Jika notifikasi masih senyap, semak **Tetapan Android → App → Waktu Solat →
+Notifikasi** (saluran "Waktu Solat" mesti dibenarkan dengan bunyi).
+
+---
+
 ## Takwim Hijri
 
 Kalendar Hijri dalam apl ini **bukan** anggaran Umm al-Qura. Ia menggunakan
@@ -243,8 +265,8 @@ Ciri untuk TV:
 - **Mod Jam** — paparan jam besar + waktu solat seterusnya + kira detik,
   sesuai dibiarkan hidup sepanjang hari (skrin tidak akan tidur).
   Dua gaya: **Lengkap** dan **Minimalis** (Tetapan → Paparan → Gaya jam).
-- **Notifikasi waktu solat** — notifikasi + bunyi pada setiap waktu
-  (Tetapan → TV & Notifikasi). Berterusan selepas reboot.
+- **Notifikasi waktu solat** — notifikasi + bunyi pada setiap waktu.
+  Pilih waktu yang berbunyi di **Tetapan → Notifikasi**. Berterusan selepas reboot.
 - **Navigasi remote** — anak panah untuk gerak fokus, OK untuk pilih,
   butang Back keluar dari Mod Jam.
 - TV tidak ada GPS — tetapkan lokasi di **Tetapan → Lokasi** (pilih bandar

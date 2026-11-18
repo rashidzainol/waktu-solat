@@ -3,6 +3,7 @@ package my.rashidzainol.waktusolat;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlarmManager;
 import android.app.NotificationManager;
 import android.app.UiModeManager;
 import android.content.Intent;
@@ -13,6 +14,7 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -126,6 +128,8 @@ public class MainActivity extends Activity {
             requestLocationPermission();
         }
 
+        // Saluran notifikasi dicipta awal supaya tetapan bunyi/keutamaan betul.
+        try { NotifReceiver.ensureChannel(this); } catch (Exception ignored) {}
         requestNotificationPermissionIfNeeded();
 
         if (savedInstanceState == null) {
@@ -155,14 +159,84 @@ public class MainActivity extends Activity {
     }
 
     private void requestNotificationPermissionIfNeeded() {
-        if (Build.VERSION.SDK_INT >= 33) {
-            NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-            boolean enabled = nm != null && nm.areNotificationsEnabled();
-            if (enabled &&
-                    checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
-                            != PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, REQ_NOTIF);
+        if (Build.VERSION.SDK_INT < 33) return;
+        if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
+                == PackageManager.PERMISSION_GRANTED) return;
+
+        // Tanya sekali sahaja semasa app dibuka. Selepas itu butang
+        // "Benarkan" dalam Tetapan yang menguruskan permintaan.
+        boolean asked = getSharedPreferences("waktu-solat", MODE_PRIVATE)
+                .getBoolean("notifAsked", false);
+        if (asked) return;
+
+        markNotifAsked();
+        try {
+            requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, REQ_NOTIF);
+        } catch (Exception ignored) {
+        }
+    }
+
+    /** Pengguna menekan "Benarkan" / "Buka tetapan" dalam app. */
+    private void askNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= 33
+                && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
+                        != PackageManager.PERMISSION_GRANTED) {
+
+            boolean asked = getSharedPreferences("waktu-solat", MODE_PRIVATE)
+                    .getBoolean("notifAsked", false);
+            boolean canAsk = shouldShowRequestPermissionRationale(
+                    Manifest.permission.POST_NOTIFICATIONS);
+
+            // Sudah ditanya & tidak boleh ditanya lagi → buka tetapan Android.
+            if (asked && !canAsk) {
+                openNotificationSettings();
+                return;
             }
+            markNotifAsked();
+            requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, REQ_NOTIF);
+            return;
+        }
+
+        NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        if (nm != null && !nm.areNotificationsEnabled()) {
+            openNotificationSettings();
+            return;
+        }
+        openExactAlarmSettingsIfNeeded();
+    }
+
+    private void markNotifAsked() {
+        try {
+            getSharedPreferences("waktu-solat", MODE_PRIVATE)
+                    .edit().putBoolean("notifAsked", true).apply();
+        } catch (Exception ignored) {
+        }
+    }
+
+    private void openNotificationSettings() {
+        try {
+            Intent i = new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                    .putExtra(Settings.EXTRA_APP_PACKAGE, getPackageName());
+            startActivity(i);
+        } catch (Exception e) {
+            try {
+                startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                        Uri.parse("package:" + getPackageName())));
+            } catch (Exception ignored) {
+            }
+        }
+    }
+
+    private void openExactAlarmSettingsIfNeeded() {
+        if (Build.VERSION.SDK_INT < 31) return;
+        try {
+            AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
+            if (am != null && !am.canScheduleExactAlarms()) {
+                startActivity(new Intent(
+                        Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM,
+                        Uri.parse("package:" + getPackageName())));
+            }
+        } catch (Exception ignored) {
         }
     }
 
@@ -188,6 +262,19 @@ public class MainActivity extends Activity {
             geoCallback.invoke(geoOrigin, true, false);
             geoCallback = null;
             geoOrigin = null;
+        }
+        if (requestCode == REQ_NOTIF && web != null) {
+            // Beritahu UI supaya status notifikasi disegarkan serta-merta.
+            web.post(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        web.evaluateJavascript(
+                                "window.__notifChanged&&window.__notifChanged()", null);
+                    } catch (Exception ignored) {
+                    }
+                }
+            });
         }
     }
 
@@ -263,6 +350,61 @@ public class MainActivity extends Activity {
         public void cancel() {
             try {
                 PrayerAlarms.apply(MainActivity.this, "[]");
+            } catch (Exception ignored) {
+            }
+        }
+
+        /**
+         * Status kebenaran notifikasi untuk UI:
+         * permission = POST_NOTIFICATIONS (Android 13+),
+         * enabled = notifikasi tidak disekat dalam tetapan Android,
+         * exact = alarm tepat dibenarkan.
+         */
+        @JavascriptInterface
+        public String status() {
+            boolean permission = true;
+            if (Build.VERSION.SDK_INT >= 33) {
+                permission = checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
+                        == PackageManager.PERMISSION_GRANTED;
+            }
+            NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+            boolean enabled = nm == null || nm.areNotificationsEnabled();
+
+            boolean exact = true;
+            if (Build.VERSION.SDK_INT >= 31) {
+                AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
+                exact = am == null || am.canScheduleExactAlarms();
+            }
+            return "{\"permission\":" + permission +
+                    ",\"enabled\":" + enabled +
+                    ",\"exact\":" + exact + "}";
+        }
+
+        @JavascriptInterface
+        public void requestPermission() {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    askNotificationPermission();
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public void openSettings() {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    openNotificationSettings();
+                }
+            });
+        }
+
+        /** Hantar notifikasi contoh (butang "Uji notifikasi"). */
+        @JavascriptInterface
+        public void testNotification(String label) {
+            try {
+                NotifReceiver.showNow(MainActivity.this, label);
             } catch (Exception ignored) {
             }
         }
