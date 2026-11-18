@@ -1368,17 +1368,20 @@
           remoteUpdate = { version: ver, url: asset ? asset.browser_download_url : null };
           setUpdateStatus('Versi baharu v' + ver + ' tersedia (versi anda v' + local + ')');
           $('btnDoUpdate').hidden = !remoteUpdate.url;
+          if ($('updateHint')) $('updateHint').hidden = !remoteUpdate.url;
           if (!remoteUpdate.url) setUpdateStatus('Versi baharu v' + ver + ' tersedia — buka GitHub untuk muat turun');
           if (verbose) toast('Versi baharu v' + ver + ' tersedia');
         } else {
           remoteUpdate = null;
           $('btnDoUpdate').hidden = true;
+          if ($('updateHint')) $('updateHint').hidden = true;
           setUpdateStatus('App terkini — v' + local);
           if (verbose) toast('App sudah terkini');
         }
       })
       .catch(function (err) {
         remoteUpdate = null;
+        if ($('updateHint')) $('updateHint').hidden = true;
         if (verbose) {
           setUpdateStatus('Gagal semak kemas kini — semak internet.');
           toast('Gagal semak kemas kini', 4200);

@@ -5,6 +5,19 @@ plugins {
 // Folder aset web yang disalin dari folder induk (root projek web).
 val webAssetsDir = layout.buildDirectory.dir("webassets").get().asFile
 
+// Kunci tandatangan TETAP. Tanpa ini, GitHub Actions menjana debug keystore
+// baharu pada setiap run, jadi APK setiap versi ditandatangani dengan kunci
+// berbeza dan Android menolak kemas kini ("package conflict").
+// Nilai datang dari repository secrets (lihat .github/workflows/android.yml).
+// Untuk build tempatan tanpa secrets, debug keystore biasa digunakan.
+val wsKeystorePath: String? = System.getenv("WS_KEYSTORE")
+val wsStorePassword: String? = System.getenv("WS_KEYSTORE_PASSWORD")
+val wsKeyAliasName: String? = System.getenv("WS_KEY_ALIAS")
+val wsKeyPassword: String? = System.getenv("WS_KEY_PASSWORD")
+val wsHasSigning = wsKeystorePath != null && java.io.File(wsKeystorePath).exists() &&
+        !wsStorePassword.isNullOrBlank() &&
+        !wsKeyAliasName.isNullOrBlank()
+
 android {
     namespace = "my.rashidzainol.waktusolat"
     compileSdk = 34
@@ -13,17 +26,33 @@ android {
         applicationId = "my.rashidzainol.waktusolat"
         minSdk = 24
         targetSdk = 34
-        versionCode = 8
-        versionName = "1.7"
+        versionCode = 9
+        versionName = "1.8"
+    }
+
+    signingConfigs {
+        if (wsHasSigning) {
+            create("waktuSolat") {
+                storeFile = java.io.File(wsKeystorePath!!)
+                storePassword = wsStorePassword
+                keyAlias = wsKeyAliasName
+                keyPassword = wsKeyPassword
+                storeType = "PKCS12"
+            }
+        }
     }
 
     buildTypes {
-        release {
+        getByName("debug") {
+            if (wsHasSigning) signingConfig = signingConfigs.getByName("waktuSolat")
+        }
+        getByName("release") {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            if (wsHasSigning) signingConfig = signingConfigs.getByName("waktuSolat")
         }
     }
 

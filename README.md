@@ -84,6 +84,28 @@ di GitHub:
 Untuk **PWA** (pelayar), kemas kini berlaku melalui service worker secara
 automatik; butang **Kemas kini sekarang** memaksa semakan + muat semula.
 
+### Tandatangan APK (penting)
+
+APK mesti ditandatangani dengan **kunci yang sama** untuk setiap versi, jika
+tidak Android menolak kemas kini dengan mesej *"App not installed as package
+conflict with an existing package"* (signature mismatch). Build debug biasa
+**tidak** selamat untuk ini kerana GitHub Actions menjana debug keystore
+baharu pada setiap run.
+
+Workflow menggunakan kunci tetap daripada repository secrets:
+
+| Secret | Kandungan |
+|--------|-----------|
+| `ANDROID_KEYSTORE_BASE64` | fail PKCS12 (`.p12`) dalam base64 |
+| `ANDROID_KEYSTORE_PASSWORD` | kata laluan stor |
+| `ANDROID_KEY_ALIAS` | alias kunci (`waktusolat`) |
+| `ANDROID_KEY_PASSWORD` | kata laluan kunci (sama dengan stor) |
+
+**Simpan salinan `waktusolat-release.p12` di tempat selamat** (jangan commit
+ke repo). Jika kunci hilang, semua pengguna perlu nyahpasang app sebelum
+memasang versi baharu. Sijil: `CN=Waktu Solat`, SHA-256
+`85:19:ED:2B:BB:A3:B1:49:B7:F5:6A:B0:97:8B:39:02:3D:A4:CB:74:4A:F9:24:6B:E3:53:69:FC:AA:67:AF:E5`.
+
 ---
 
 ## Notifikasi waktu solat
