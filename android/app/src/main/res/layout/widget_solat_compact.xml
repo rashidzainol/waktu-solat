@@ -5,10 +5,10 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="@drawable/widget_bg"
-    android:paddingStart="9dp"
-    android:paddingEnd="9dp"
-    android:paddingTop="8dp"
-    android:paddingBottom="8dp">
+    android:paddingStart="6dp"
+    android:paddingEnd="6dp"
+    android:paddingTop="4dp"
+    android:paddingBottom="4dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -17,28 +17,17 @@
         android:gravity="center_vertical">
 
         <TextView
-            android:id="@+id/wTitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Waktu Solat"
-            android:textColor="#34d399"
-            android:textSize="11.5sp"
-            android:textStyle="bold"
-            android:maxLines="1" />
-
-        <TextView
             android:id="@+id/wZone"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="5dp"
-            android:paddingStart="5dp"
-            android:paddingEnd="5dp"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp"
             android:paddingTop="1dp"
             android:paddingBottom="1dp"
             android:background="@drawable/widget_chip"
             android:text=""
             android:textColor="#8ba39a"
-            android:textSize="9sp"
+            android:textSize="8sp"
             android:maxLines="1" />
 
         <TextView
@@ -46,30 +35,10 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:gravity="end"
+            android:gravity="center"
             android:text=""
             android:textColor="#8ba39a"
-            android:textSize="10sp"
-            android:maxLines="1"
-            android:ellipsize="end" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginTop="3dp"
-        android:gravity="center_vertical">
-
-        <TextView
-            android:id="@+id/wNextName"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Seterusnya: —"
-            android:textColor="#eaf3ef"
-            android:textSize="14.5sp"
-            android:textStyle="bold"
+            android:textSize="8.5sp"
             android:maxLines="1"
             android:ellipsize="end" />
 
@@ -77,10 +46,9 @@
             android:id="@+id/wNextInfo"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="6dp"
-            android:text="—"
+            android:text=""
             android:textColor="#34d399"
-            android:textSize="12sp"
+            android:textSize="8.5sp"
             android:maxLines="1" />
     </LinearLayout>
 
@@ -88,7 +56,7 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:layout_marginTop="6dp"
+        android:layout_marginTop="2dp"
         android:orientation="horizontal">
 
         <include layout="@layout/widget_row5" />

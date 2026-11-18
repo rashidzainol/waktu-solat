@@ -140,32 +140,32 @@ public abstract class SolatWidgetBase extends AppWidgetProvider {
     }
 
     protected static void finishRender(RemoteViews rv, Context ctx, Data d, long now) {
-        rv.setTextViewText(R.id.wZone, d.zone);
-        int zv = (d.zone == null || d.zone.isEmpty()) ? View.GONE : View.VISIBLE;
-        rv.setViewVisibility(R.id.wZone, zv);
-
+        int zid = ctx.getResources().getIdentifier("wZone", "id", ctx.getPackageName());
+        int did = ctx.getResources().getIdentifier("wDate", "id", ctx.getPackageName());
+        int nid = ctx.getResources().getIdentifier("wNextName", "id", ctx.getPackageName());
+        int iid = ctx.getResources().getIdentifier("wNextInfo", "id", ctx.getPackageName());
+        if (zid != 0) {
+            rv.setTextViewText(zid, d.zone);
+            rv.setViewVisibility(zid, (d.zone == null || d.zone.isEmpty()) ? View.GONE : View.VISIBLE);
+        }
+        if (did != 0) {
+            rv.setTextViewText(did, d.hasData ? d.hijri : "");
+        }
         if (d.hasData) {
             String nextName = d.nextKey != null
-                    ? labelOf(d.nextKey) + (d.nextTomorrow ? " · esok" : "")
+                    ? labelOf(d.nextKey) + (d.nextTomorrow ? " \u00b7 esok" : "")
                     : null;
-            String nextInfo = d.nextMs > 0
-                    ? "pada " + hhmm(d.nextMs) + " · lagi " + shortCd(d.nextMs - now)
-                    : "";
-            rv.setTextViewText(R.id.wNextName,
-                    nextName != null ? "Seterusnya: " + nextName : "Waktu hari ini tamat");
-            rv.setTextViewText(R.id.wNextInfo, nextInfo);
-            rv.setTextViewText(R.id.wDate, d.hijri);
+            if (nid != 0) {
+                rv.setTextViewText(nid,
+                        nextName != null ? "Seterusnya: " + nextName : "Waktu hari ini tamat");
+            }
+            if (iid != 0) {
+                rv.setTextViewText(iid, d.nextMs > 0 ? "pada " + hhmm(d.nextMs) + " \u00b7 lagi " + shortCd(d.nextMs - now) : "");
+            }
         } else {
-            rv.setTextViewText(R.id.wNextName, "Buka app untuk muat waktu");
-            rv.setTextViewText(R.id.wNextInfo, "");
-            rv.setTextViewText(R.id.wDate, "");
+            if (nid != 0) rv.setTextViewText(nid, "Buka app untuk muat waktu");
+            if (iid != 0) rv.setTextViewText(iid, "");
         }
-
-        Intent open = new Intent(ctx, MainActivity.class)
-                .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        rv.setOnClickPendingIntent(R.id.widgetRoot, PendingIntent.getActivity(
-                ctx, REQ_OPEN, open,
-                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
     }
 
     protected static void renderVariant(Context ctx, Class<? extends AppWidgetProvider> providerClass,
