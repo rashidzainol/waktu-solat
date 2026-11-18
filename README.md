@@ -2,10 +2,8 @@
 
 Apl web (PWA) untuk waktu solat dan arah kiblat — untuk kegunaan peribadi.
 
-- **Waktu solat diambil bulat-bulat daripada data rasmi JAKIM (e-Solat)** —
-  tiada pengiraan, tiada pelarasan, tiada tetapan kaedah. Papar seperti diterbitkan.
-- **60 zon rasmi JAKIM** seluruh Malaysia dibenamkan dalam app (setahun penuh),
-  jadi berfungsi **tanpa internet**. Data boleh dikemas kini dalam talian.
+- **Waktu solat diambil daripada data rasmi JAKIM (e-Solat)**
+- **60 zon rasmi JAKIM** (setahun penuh), Data boleh dikemas kini dalam talian.
 - Masa sentiasa **MYT (UTC+8)** seperti terbitan JAKIM.
 - **Kiblat auto** daripada GPS, dan **kiblat manual** — taip bearing sendiri
   (contoh `292° 30′`). Kompas dengan pembetulan offset.
