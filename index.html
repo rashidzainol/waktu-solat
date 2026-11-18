@@ -227,8 +227,8 @@
         </div>
       </div>
 
-      <div class="shead">Notifikasi</div>
-      <div class="card scard" id="notifCard">
+      <div class="shead phone-only">Notifikasi</div>
+      <div class="card scard phone-only" id="notifCard">
         <div class="field">
           <div class="fl">
             <div class="n">Notifikasi waktu solat</div>
@@ -309,34 +309,31 @@
         </details>
       </div>
 
-      <div class="shead">Data JAKIM</div>
+      <div class="shead">Data & Kemas kini</div>
       <div class="card scard">
         <div class="field">
           <div class="fl">
             <div class="n">Kemas kini data</div>
-            <div class="d" id="refreshStatus">Muat turun data terkini untuk zon ini (perlu internet)</div>
+            <div class="d" id="refreshStatus">Muat turun data terkini untuk zon ini</div>
           </div>
         </div>
         <div class="btnrow">
           <button class="btn primary" id="btnRefresh">Kemas kini sekarang</button>
         </div>
-      </div>
 
-      <div class="shead">Kemas kini App</div>
-      <div class="card scard">
-        <div class="field">
+        <div class="field phone-only" style="margin-top:6px">
           <div class="fl">
             <div class="n">Versi app</div>
             <div class="d" id="updateStatus">Menyemak versi terkini…</div>
           </div>
         </div>
-        <div class="btnrow">
+        <div class="btnrow phone-only">
           <button class="btn ghost" id="btnCheckUpdate">Semak kemas kini</button>
           <button class="btn primary" id="btnDoUpdate" hidden>Kemas kini sekarang</button>
         </div>
-        <div class="updatehint" id="updateHint" hidden>
+        <div class="updatehint phone-only" id="updateHint" hidden>
           Jika pemasang Android berkata “package conflict”, nyahpasang app lama
-          sekali (tetapan akan hilang), kemudian pasang APK ini.
+          sekali, kemudian pasang APK ini.
         </div>
       </div>
 
@@ -383,7 +380,7 @@
           <button type="button" data-theme="minimal"><span class="sw sw-minimal"></span>Minimalis</button>
           <button type="button" data-theme="dark"><span class="sw sw-dark"></span>Gelap</button>
         </div>
-        <div class="field">
+        <div class="field tv-only">
           <div class="fl">
             <div class="n">Gaya jam</div>
             <div class="d">Paparan Mod Jam di TV</div>
@@ -393,7 +390,7 @@
             <option value="mini">Minimalis</option>
           </select>
         </div>
-        <div class="field">
+        <div class="field tv-only">
           <div class="fl">
             <div class="n">Buka Mod Jam terus</div>
             <div class="d">Paparan jam dulu semasa app dibuka (sesuai untuk TV)</div>

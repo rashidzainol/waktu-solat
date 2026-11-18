@@ -412,7 +412,7 @@ main{flex:1;padding:16px 16px calc(96px + var(--safe-b))}
 .shead:first-child{margin-top:2px}
 .scard{overflow:hidden}
 .field{
-  display:flex;align-items:center;gap:12px;padding:13px 16px;
+  display:flex;align-items:center;gap:12px;padding:10px 16px;
   border-bottom:1px solid var(--line)
 }
 .field:last-child{border-bottom:0}
@@ -663,8 +663,8 @@ html[data-theme="minimal"] .btn{border-radius:9px}
    NAVIGASI D-PAD (remote TV) — fokus kelihatan
    ========================================================================== */
 
-body.tv-mode .topbar,
-body.tv-mode .tabbar{position:sticky}
+body.tv-mode .phone-only{display:none !important}
+body:not(.tv-mode) .tv-only{display:none !important}
 
 body.tv-mode main{padding:24px 48px calc(110px + var(--safe-b))}
 body.tv-mode .app{max-width:1180px}
