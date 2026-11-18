@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Satu baris 5 sel waktu (Subuh, Zohor, Asar, Maghrib, Isyak). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal">
+
+    <LinearLayout android:id="@+id/wC0" style="@style/WidgetCell">
+        <TextView android:id="@+id/wK0" style="@style/WidgetCellLabel" />
+        <TextView android:id="@+id/wT0" style="@style/WidgetCellTime" />
+    </LinearLayout>
+
+    <LinearLayout android:id="@+id/wC1" style="@style/WidgetCell">
+        <TextView android:id="@+id/wK1" style="@style/WidgetCellLabel" />
+        <TextView android:id="@+id/wT1" style="@style/WidgetCellTime" />
+    </LinearLayout>
+
+    <LinearLayout android:id="@+id/wC2" style="@style/WidgetCell">
+        <TextView android:id="@+id/wK2" style="@style/WidgetCellLabel" />
+        <TextView android:id="@+id/wT2" style="@style/WidgetCellTime" />
+    </LinearLayout>
+
+    <LinearLayout android:id="@+id/wC3" style="@style/WidgetCell">
+        <TextView android:id="@+id/wK3" style="@style/WidgetCellLabel" />
+        <TextView android:id="@+id/wT3" style="@style/WidgetCellTime" />
+    </LinearLayout>
+
+    <LinearLayout android:id="@+id/wC4" style="@style/WidgetCell">
+        <TextView android:id="@+id/wK4" style="@style/WidgetCellLabel" />
+        <TextView android:id="@+id/wT4" style="@style/WidgetCellTime" />
+    </LinearLayout>
+
+</LinearLayout>

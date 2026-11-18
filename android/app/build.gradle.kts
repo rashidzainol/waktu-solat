@@ -28,8 +28,8 @@ android {
         applicationId = "my.rashidzainol.waktusolat"
         minSdk = 24
         targetSdk = 34
-        versionCode = 12
-        versionName = "1.11"
+        versionCode = 13
+        versionName = "1.12"
     }
 
     signingConfigs {

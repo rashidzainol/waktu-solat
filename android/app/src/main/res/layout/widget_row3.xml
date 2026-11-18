@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Baris 3 sel waktu. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal">
+
+    <LinearLayout android:id="@+id/wC0" style="@style/WidgetCell">
+        <TextView android:id="@+id/wK0" style="@style/WidgetCellLabel" />
+        <TextView android:id="@+id/wT0" style="@style/WidgetCellTime" />
+    </LinearLayout>
+
+    <LinearLayout android:id="@+id/wC1" style="@style/WidgetCell">
+        <TextView android:id="@+id/wK1" style="@style/WidgetCellLabel" />
+        <TextView android:id="@+id/wT1" style="@style/WidgetCellTime" />
+    </LinearLayout>
+
+    <LinearLayout android:id="@+id/wC2" style="@style/WidgetCell">
+        <TextView android:id="@+id/wK2" style="@style/WidgetCellLabel" />
+        <TextView android:id="@+id/wT2" style="@style/WidgetCellTime" />
+    </LinearLayout>
+
+</LinearLayout>

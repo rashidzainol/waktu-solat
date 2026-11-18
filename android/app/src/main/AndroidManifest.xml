@@ -56,6 +56,24 @@
                 android:resource="@xml/widget_info" />
         </receiver>
 
+        <receiver android:name=".SolatWidgetCompact" android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_info_compact" />
+        </receiver>
+
+        <receiver android:name=".SolatWidgetSimple" android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_info_simple" />
+        </receiver>
+
         <!-- Alarm waktu solat + penyelenggaraan harian -->
         <receiver android:name=".NotifReceiver" android:exported="false">
             <intent-filter>

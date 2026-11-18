@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal">
+
+    <LinearLayout android:id="@+id/wC3" style="@style/WidgetCell">
+        <TextView android:id="@+id/wK3" style="@style/WidgetCellLabel" />
+        <TextView android:id="@+id/wT3" style="@style/WidgetCellTime" />
+    </LinearLayout>
+
+    <LinearLayout android:id="@+id/wC4" style="@style/WidgetCell">
+        <TextView android:id="@+id/wK4" style="@style/WidgetCellLabel" />
+        <TextView android:id="@+id/wT4" style="@style/WidgetCellTime" />
+    </LinearLayout>
+
+    <LinearLayout android:id="@+id/wC5" style="@style/WidgetCell">
+        <TextView android:id="@+id/wK5" style="@style/WidgetCellLabel" />
+        <TextView android:id="@+id/wT5" style="@style/WidgetCellTime" />
+    </LinearLayout>
+
+</LinearLayout>

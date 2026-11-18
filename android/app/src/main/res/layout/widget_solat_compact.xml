@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widgetRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/widget_bg"
+    android:paddingStart="9dp"
+    android:paddingEnd="9dp"
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/wTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Waktu Solat"
+            android:textColor="#34d399"
+            android:textSize="11.5sp"
+            android:textStyle="bold"
+            android:maxLines="1" />
+
+        <TextView
+            android:id="@+id/wZone"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="5dp"
+            android:paddingStart="5dp"
+            android:paddingEnd="5dp"
+            android:paddingTop="1dp"
+            android:paddingBottom="1dp"
+            android:background="@drawable/widget_chip"
+            android:text=""
+            android:textColor="#8ba39a"
+            android:textSize="9sp"
+            android:maxLines="1" />
+
+        <TextView
+            android:id="@+id/wDate"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="end"
+            android:text=""
+            android:textColor="#8ba39a"
+            android:textSize="10sp"
+            android:maxLines="1"
+            android:ellipsize="end" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="3dp"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/wNextName"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Seterusnya: —"
+            android:textColor="#eaf3ef"
+            android:textSize="14.5sp"
+            android:textStyle="bold"
+            android:maxLines="1"
+            android:ellipsize="end" />
+
+        <TextView
+            android:id="@+id/wNextInfo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:text="—"
+            android:textColor="#34d399"
+            android:textSize="12sp"
+            android:maxLines="1" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="6dp"
+        android:orientation="horizontal">
+
+        <include layout="@layout/widget_row5" />
+    </LinearLayout>
+
+</LinearLayout>

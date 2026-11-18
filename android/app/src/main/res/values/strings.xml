@@ -2,4 +2,7 @@
 <resources>
     <string name="app_name">Waktu Solat</string>
     <string name="widget_desc">Waktu solat hari ini &amp; waktu seterusnya</string>
+    <string name="widget_full">Waktu Solat — Penuh</string>
+    <string name="widget_compact">Waktu Solat — Ringkas</string>
+    <string name="widget_simple">Waktu Solat — Simpel</string>
 </resources>
