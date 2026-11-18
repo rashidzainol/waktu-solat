@@ -997,7 +997,7 @@
       pushedClock = true;
     }
     currentView = name;
-    ['times', 'clock', 'qibla', 'settings'].forEach(function (v) {
+    ['clock', 'qibla', 'settings'].forEach(function (v) {
       $('view-' + v).classList.toggle('active', v === name);
     });
     Array.prototype.forEach.call(document.querySelectorAll('.tab'), function (t) {
@@ -1133,13 +1133,7 @@
 
   function wire() {
     $('btnClock').addEventListener('click', function () { showView('clock'); });
-    $('btnClockExit').addEventListener('click', function () {
-      if (pushedClock) {
-        try { history.back(); } catch (e) {}
-      } else {
-        showView('times');
-      }
-    });
+
 
     // Butang Back remote TV / peranti: dari Mod Jam kembali ke Waktu Solat.
     window.addEventListener('popstate', function () {
@@ -1625,7 +1619,7 @@
     if (lv) setUpdateStatus('Versi ' + lv + ' — menyemak…');
 
     lastDateStr = new Date().toDateString();
-    var startView = C.state.autoClock ? 'clock' : 'times';
+    var startView = 'clock';
     showView(startView);
     renderTimes(new Date());
     renderQibla();
