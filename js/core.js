@@ -1,9 +1,5 @@
 /* ==========================================================================
    core.js — zon JAKIM, data waktu solat rasmi, kiblat, takwim
-   ==========================================================================
-   Waktu solat TIDAK lagi dikira. Data bulat-bulat daripada JAKIM (e-Solat),
-   dibenam dalam app (js/jakim-data.js) dan boleh dikemas kini dalam talian
-   (cache per peranti) selepas 2026.
    ========================================================================== */
 (function (global) {
   'use strict';

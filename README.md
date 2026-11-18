@@ -57,9 +57,6 @@ waktu-solat/
 
 ## Data JAKIM (e-Solat)
 
-Waktu solat **bukan hasil pengiraan**. Ia dibaca terus dari jadual rasmi
-JAKIM (e-Solat) dan dipaparkan **bulat-bulat** seperti diterbitkan:
-
 - **60 zon rasmi** (WLY01, SGR01, JHR02, …) — pilih di **Tetapan → Zon JAKIM**.
   - **Ikut lokasi GPS** (lalai, hidup): zon dipilih automatik daripada
     koordinat peranti — titik rujukan terdekat bagi setiap zon. Zon pulau
