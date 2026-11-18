@@ -1,3 +1,5 @@
+import java.io.File
+
 plugins {
     id("com.android.application")
 }
@@ -14,7 +16,7 @@ val wsKeystorePath: String? = System.getenv("WS_KEYSTORE")
 val wsStorePassword: String? = System.getenv("WS_KEYSTORE_PASSWORD")
 val wsKeyAliasName: String? = System.getenv("WS_KEY_ALIAS")
 val wsKeyPassword: String? = System.getenv("WS_KEY_PASSWORD")
-val wsHasSigning = wsKeystorePath != null && java.io.File(wsKeystorePath).exists() &&
+val wsHasSigning = wsKeystorePath != null && File(wsKeystorePath).exists() &&
         !wsStorePassword.isNullOrBlank() &&
         !wsKeyAliasName.isNullOrBlank()
 
@@ -33,7 +35,7 @@ android {
     signingConfigs {
         if (wsHasSigning) {
             create("waktuSolat") {
-                storeFile = java.io.File(wsKeystorePath!!)
+                storeFile = File(wsKeystorePath!!)
                 storePassword = wsStorePassword
                 keyAlias = wsKeyAliasName
                 keyPassword = wsKeyPassword
