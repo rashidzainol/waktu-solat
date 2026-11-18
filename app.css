@@ -651,6 +651,7 @@ html[data-theme="minimal"] .btn{border-radius:9px}
 .ck-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;width:100%}
 .ck-cell{padding:14px 10px;border:1px solid var(--line);border-radius:12px;background:var(--soft-2)}
 .ck-cell .k{font-size:13px;color:var(--muted);letter-spacing:.04em}
+.ck-cell .ic{font-size:18px;line-height:1;margin-bottom:2px}
 .ck-cell .t{font-size:clamp(17px,2.6vmin,26px);font-weight:600;margin-top:4px;font-variant-numeric:tabular-nums}
 .ck-cell.is-next{border-color:var(--accent-line);background:var(--accent-dim)}
 .ck-cell.is-next .k{color:var(--accent)}

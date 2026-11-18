@@ -467,6 +467,10 @@
       imsak: 'Imsak', fajr: 'Subuh', syuruk: 'Syuruk', dhuha: 'Duha',
       dhuhr: 'Zohor', asr: 'Asar', maghrib: 'Maghrib', isha: 'Isyak'
     },
+    META_ICONS: {
+      imsak: '🌙', fajr: '🌅', syuruk: '🌄', dhuha: '☀️',
+      dhuhr: '🌞', asr: '🌤', maghrib: '🌇', isha: '🌙'
+    },
     ORDER: ['imsak', 'fajr', 'syuruk', 'dhuha', 'dhuhr', 'asr', 'maghrib', 'isha'],
     PRAYER_KEYS: ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'],
     HIJRI_MONTHS: HIJRI_MONTHS,

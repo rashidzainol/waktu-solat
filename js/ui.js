@@ -369,43 +369,14 @@
               (now.getHours() < 12 ? 'A' : 'P') + '|' + now.toDateString();
 
     if (mini) {
-      var m = h12Parts(now);
-      var el = $('ckmTime');
-      el.innerHTML = C.pad2(m.h) + ':' + C.pad2(m.m) +
-        '<span class="ckm-sec num">' + C.pad2(m.s) + '</span>';
-      var next = sc.next
-        ? (C.META_LABELS[sc.next.key] + (sc.next.tomorrow ? ' · esok' : '') +
-          ' pukul <b class="num">' + C.fmtTime(sc.next.date) + '</b>')
-        : 'Data JAKIM belum tersedia';
-      $('ckmNext').innerHTML = next + (sc.next ? ' &nbsp;·&nbsp; lagi <b>' +
-        countdownText(sc.next.date.getTime() - now.getTime()) + '</b>' : '');
       return;
     }
 
     if (!force && sig === clockSig) {
       // kemas kini kira detik sahaja
-      var cnt = $('ckCount');
-      if (cnt && sc.next) cnt.textContent = countdownText(sc.next.date.getTime() - now.getTime());
       return;
     }
     clockSig = sig;
-
-    var p = h12Parts(now);
-    $('ckTime').innerHTML = C.pad2(p.h) + ':' + C.pad2(p.m) +
-      '<span class="ampm">' + p.ampm + '</span>';
-    var h = hijriText(now);
-    $('ckDate').textContent = DAYS[now.getDay()] + ', ' + now.getDate() + ' ' +
-      MONTHS[now.getMonth()] + ' ' + now.getFullYear() + (h ? ' · ' + h : '');
-
-    if (sc.next) {
-      $('ckName').textContent = C.META_LABELS[sc.next.key] + (sc.next.tomorrow ? ' · esok' : '');
-      $('ckNextAt').textContent = C.fmtTime(sc.next.date);
-      $('ckCount').textContent = countdownText(sc.next.date.getTime() - now.getTime());
-    } else {
-      $('ckName').textContent = 'Data JAKIM belum tersedia';
-      $('ckNextAt').textContent = '—';
-      $('ckCount').textContent = '—';
-    }
 
     var grid = $('ckGrid');
     var frag = document.createDocumentFragment();
@@ -420,9 +391,13 @@
       var k = document.createElement('div');
       k.className = 'k';
       k.textContent = C.META_LABELS[key];
+      var ic = document.createElement('div');
+      ic.className = 'ic';
+      ic.textContent = (C.META_ICONS && C.META_ICONS[key]) || '';
       var t = document.createElement('div');
       t.className = 't';
       t.textContent = C.fmtTime(date);
+      cell.appendChild(ic);
       cell.appendChild(k);
       cell.appendChild(t);
       frag.appendChild(cell);
