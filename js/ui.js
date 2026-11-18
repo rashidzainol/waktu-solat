@@ -933,6 +933,7 @@
     $('setClockStyle').value = st.clockStyle === 'mini' ? 'mini' : 'full';
     $('setAutoClock').value = st.autoClock ? '1' : '0';
     if ($('setTimeFormat')) $('setTimeFormat').value = st.timeFormat === '12' ? '12' : '24';
+    syncTimeFormatBtn();
 
     applyTheme();
     refreshNotifUI();
@@ -1241,6 +1242,17 @@
         commit();
         // kemas kini paparan
         renderTimes(new Date());
+        syncTimeFormatBtn();
+      });
+    }
+
+    var tfb = $('btnTimeFormat');
+    if (tfb) {
+      tfb.addEventListener('click', function () {
+        C.state.timeFormat = (C.state.timeFormat === '12') ? '24' : '12';
+        C.saveState();
+        tfb.textContent = (C.state.timeFormat === '12') ? '12H' : '24H';
+        renderTimes(new Date());
       });
     }
     $('setNotify').addEventListener('click', function () {
@@ -1430,9 +1442,10 @@
     return 0;
   }
 
-  function setUpdateStatus(text) {
-    var el = $('updateStatus');
-    if (el) el.textContent = text;
+  function syncTimeFormatBtn() {
+    var b = $('btnTimeFormat');
+    if (!b) return;
+    b.textContent = (C.state.timeFormat === '12') ? '12H' : '24H';
   }
 
   function showUpdateBadge(ver) {

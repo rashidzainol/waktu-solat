@@ -648,7 +648,10 @@ html[data-theme="minimal"] .btn{border-radius:9px}
 .ck-count{font-size:clamp(26px,4.6vmin,44px);font-weight:300;font-variant-numeric:tabular-nums}
 .ck-nextat{color:var(--muted);font-size:14px;margin-top:2px}
 
-.ck-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;width:100%}
+.ck-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;width:100%;margin-top:12px}
+.timefmt-row{display:flex;justify-content:flex-end;margin-top:10px}
+.timefmt-btn{padding:4px 12px;border-radius:999px;border:1px solid var(--line-2);background:var(--surface);color:var(--text);font-size:12px;font-weight:600;cursor:pointer}
+.timefmt-btn:active{transform:scale(.96)}
 .ck-cell{padding:14px 10px;border:1px solid var(--line);border-radius:12px;background:var(--soft-2)}
 .ck-cell .k{font-size:13px;color:var(--muted);letter-spacing:.04em}
 .ck-cell .ic{font-size:18px;line-height:1;margin-bottom:2px}
