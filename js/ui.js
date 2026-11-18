@@ -236,73 +236,15 @@
     $('heroHijri').textContent = h || '—';
     $('zoneLabel').textContent = zoneText();
 
-    // ---- segmen semasa (selepas waktu mana)
-    if (sc.current) {
-      $('currentLabel').textContent = 'Selepas ' + C.META_LABELS[sc.current.key] +
-        ' · ' + C.fmtTime(sc.current.date);
-    } else {
-      $('currentLabel').textContent = 'Sebelum ' + (sc.next ? C.META_LABELS[sc.next.key] : 'Subuh');
-    }
-
-    // ---- timeline
-    var list = $('prayerList');
-    var frag = document.createDocumentFragment();
-
-    C.ORDER.forEach(function (key) {
-      var date = sc.times[key];
-      var row = document.createElement('div');
-      row.className = 'trow';
-      row.dataset.key = key;
-
-      var isNext = !!(sc.next && sc.next.key === key && !sc.next.tomorrow);
-      var isNow = !!(sc.current && sc.current.key === key);
-
-      if (isNext) row.classList.add('is-next');
-      else if (date && date < now) row.classList.add('is-past');
-      if (isNow) row.classList.add('is-now');
-
-      var mark = document.createElement('div');
-      mark.className = 'tmark';
-      mark.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
-        'stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">' +
-        (ICONS[key] || '') + '</svg>';
-
-      var main = document.createElement('div');
-      main.className = 'tmain';
-
-      var n1 = document.createElement('div');
-      n1.className = 'tname';
-      n1.appendChild(document.createTextNode(C.META_LABELS[key]));
-      if (isNext) n1.appendChild(badge('Seterusnya'));
-      else if (isNow) n1.appendChild(badge('Kini'));
-
-      var sub = document.createElement('div');
-      sub.className = 'tsub';
-      sub.textContent = SUBS[key] || '';
-
-      main.appendChild(n1);
-      main.appendChild(sub);
-
-      var tm = document.createElement('div');
-      tm.className = 'ttime num';
-      tm.textContent = C.fmtTime(date);
-
-      row.appendChild(mark);
-      row.appendChild(main);
-      row.appendChild(tm);
-      frag.appendChild(row);
-    });
-
-    list.innerHTML = '';
-    list.appendChild(frag);
-
-    // nota sumber data
-    var ds = C.dataSource();
-    if (ds) {
-      $('calcNote').innerHTML =
-        'Data rasmi <b>JAKIM e-Solat ' + ds.year + '</b> · Zon <b>' + st.zone + '</b> · Masa MYT (UTC+8)';
-    } else {
-      $('calcNote').innerHTML = 'Data JAKIM belum tersedia untuk tarikh ini.';
+    // ---- segmen semasa (selepas waktu mana) — hanya jika elemen wujud
+    var cl = $('currentLabel');
+    if (cl) {
+      if (sc.current) {
+        cl.textContent = 'Selepas ' + C.META_LABELS[sc.current.key] +
+          ' · ' + C.fmtTime(sc.current.date);
+      } else {
+        cl.textContent = 'Sebelum ' + (sc.next ? C.META_LABELS[sc.next.key] : 'Subuh');
+      }
     }
 
     lastSignature = signature(sc);
