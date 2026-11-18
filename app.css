@@ -654,6 +654,7 @@ html[data-theme="minimal"] .btn{border-radius:9px}
 .ck-cell .ic{font-size:18px;line-height:1;margin-bottom:2px}
 .ck-cell .t{font-size:clamp(17px,2.6vmin,26px);font-weight:600;margin-top:4px;font-variant-numeric:tabular-nums}
 .ck-cell.is-next{border-color:var(--accent-line);background:var(--accent-dim)}
+.ck-cell.is-selected{border-color:var(--accent);background:var(--accent-dim);box-shadow:0 0 0 2px var(--accent-line)}
 .ck-cell.is-next .k{color:var(--accent)}
 .ck-cell.is-past{opacity:.45}
 

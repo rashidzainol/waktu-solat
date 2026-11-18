@@ -166,7 +166,8 @@
     notify: true,
     notifyKeys: ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'],
     autoClock: false,
-    clockStyle: 'full'
+    clockStyle: 'full',
+    timeFormat: '24'   // '24' atau '12' (AM/PM)
   };
 
   var STORE_KEY = 'waktu-solat/v2';
@@ -407,7 +408,14 @@
     var p = partsOf(date);
     var t = p.h * 60 + p.m + (p.s >= 30 ? 1 : 0);
     t = ((t % 1440) + 1440) % 1440;
-    return pad2(Math.floor(t / 60)) + ':' + pad2(t % 60);
+    var hh = Math.floor(t / 60);
+    var mm = t % 60;
+    if (state && state.timeFormat === '12') {
+      var ampm = hh >= 12 ? 'PM' : 'AM';
+      var h12 = hh % 12; if (h12 === 0) h12 = 12;
+      return h12 + ':' + pad2(mm) + ' ' + ampm;
+    }
+    return pad2(hh) + ':' + pad2(mm);
   }
 
   function fmtDegMin(deg) {

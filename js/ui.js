@@ -48,7 +48,8 @@
   };
 
   var lastSignature = '';
-  var currentView = 'times';
+  var currentView = 'clock';
+  var selectedKey = null;   // waktu yang dipilih pengguna untuk kiraan "Lagi"
   var liveHeading = null;
   var wakeLock = null;
   var gpsBusy = false;
@@ -190,6 +191,37 @@
              tomorrowTimes: tomorrowTimes, missing: !!times.missing };
   }
 
+  function occurrenceOf(key, now) {
+    var todayTimes = C.computeTimes(now);
+    var d = todayTimes[key];
+    if (d && d.getTime() > now.getTime()) {
+      return { date: d, tomorrow: false };
+    }
+    var nt = C.computeTimes(nextDay(now));
+    if (nt && nt[key]) {
+      return { date: nt[key], tomorrow: true };
+    }
+    if (d) return { date: d, tomorrow: false };
+    return null;
+  }
+
+  function selectPrayer(key) {
+    selectedKey = key;
+    var occ = occurrenceOf(key, new Date());
+    if (!occ) return;
+    var now = new Date();
+    var name = C.META_LABELS[key] || key;
+    $('heroEyebrow').textContent = occ.tomorrow ? 'Seterusnya · esok' : 'Seterusnya';
+    $('nextName').textContent = name + (occ.tomorrow ? ' · esok' : '');
+    $('nextTime').textContent = C.fmtTime(occ.date);
+    $('cdVal').textContent = countdownText(occ.date.getTime() - now.getTime());
+    var nm = occ.date;
+    $('heroDate').textContent = DAYS[nm.getDay()] + ', ' + nm.getDate() + ' ' +
+      MONTHS[nm.getMonth()] + ' ' + nm.getFullYear();
+    var h = hijriText(nm);
+    $('heroHijri').textContent = h || '—';
+  }
+
   /* -------------------------------------------------------------- render */
 
   function ringProgress(sc, now) {
@@ -247,6 +279,8 @@
       }
     }
 
+    if (selectedKey) selectPrayer(selectedKey);
+
     lastSignature = signature(sc);
     updateLocationLabel();
   }
@@ -258,7 +292,12 @@
 
   function updateCountdown(sc, now) {
     var el = $('cdVal');
-    if (el && sc.next) {
+    if (selectedKey) {
+      var occ = occurrenceOf(selectedKey, now);
+      if (occ && el) {
+        el.textContent = countdownText(occ.date.getTime() - now.getTime());
+      }
+    } else if (el && sc.next) {
       el.textContent = countdownText(sc.next.date.getTime() - now.getTime());
     }
     updateRing(sc, now);
@@ -330,6 +369,9 @@
         if (sc.next && sc.next.key === key && !sc.next.tomorrow) cell.classList.add('is-next');
         else if (date < now) cell.classList.add('is-past');
       }
+      if (selectedKey === key) cell.classList.add('is-selected');
+      cell.style.cursor = 'pointer';
+      cell.addEventListener('click', function () { selectPrayer(key); });
       var k = document.createElement('div');
       k.className = 'k';
       k.textContent = C.META_LABELS[key];
@@ -890,6 +932,7 @@
 
     $('setClockStyle').value = st.clockStyle === 'mini' ? 'mini' : 'full';
     $('setAutoClock').value = st.autoClock ? '1' : '0';
+    if ($('setTimeFormat')) $('setTimeFormat').value = st.timeFormat === '12' ? '12' : '24';
 
     applyTheme();
     refreshNotifUI();
@@ -1190,6 +1233,16 @@
       C.state.autoClock = this.value === '1';
       commit();
     });
+
+    var tf = $('setTimeFormat');
+    if (tf) {
+      tf.addEventListener('change', function () {
+        C.state.timeFormat = this.value === '12' ? '12' : '24';
+        commit();
+        // kemas kini paparan
+        renderTimes(new Date());
+      });
+    }
     $('setNotify').addEventListener('click', function () {
       C.state.notify = !C.state.notify;
       C.saveState();
