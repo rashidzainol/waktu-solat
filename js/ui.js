@@ -1253,6 +1253,7 @@
         C.saveState();
         tfb.textContent = (C.state.timeFormat === '12') ? '12H' : '24H';
         renderTimes(new Date());
+        renderClock(new Date(), true);
       });
     }
     $('setNotify').addEventListener('click', function () {
