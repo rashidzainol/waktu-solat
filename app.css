@@ -500,6 +500,13 @@ main{flex:1;padding:16px 16px calc(96px + var(--safe-b))}
 }
 .guidebtn:active{color:var(--accent)}
 
+/* nota zon GPS */
+.zoneNote{
+  display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;
+  padding:0 16px 13px;font-size:11px;line-height:1.55;color:var(--muted-2)
+}
+.zoneNote .guidebtn{margin-left:auto}
+
 .btnrow{display:flex;gap:10px;padding:13px 16px}
 .btn{
   flex:1;padding:11px;border-radius:11px;font-size:13.5px;font-weight:600;text-align:center;

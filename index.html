@@ -206,13 +206,24 @@
     <section class="view" id="view-settings">
 
       <div class="shead">Zon JAKIM</div>
-      <div class="card scard">
+      <div class="card scard" id="zoneCard">
+        <div class="field">
+          <div class="fl">
+            <div class="n">Ikut lokasi GPS</div>
+            <div class="d">Zon dipilih automatik daripada lokasi peranti</div>
+          </div>
+          <button class="switch" id="setZoneAuto" role="switch" aria-checked="true" aria-label="Ikut lokasi GPS"><span></span></button>
+        </div>
         <div class="field">
           <div class="fl">
             <div class="n">Zon waktu solat</div>
             <div class="d">Ikut zon rasmi e-Solat JAKIM</div>
           </div>
           <select id="setZone"></select>
+        </div>
+        <div class="zoneNote">
+          <span id="zoneNoteText">—</span>
+          <button type="button" class="guidebtn" id="btnZoneGps">Kemas kini lokasi</button>
         </div>
       </div>
 

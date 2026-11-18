@@ -883,6 +883,50 @@
 
   /* ------------------------------------------------------------ settings */
 
+  /** Teks nota di bawah pemilih zon (status auto/manual + jarak). */
+  function updateZoneNote() {
+    var el = $('zoneNoteText');
+    if (!el) return;
+    var st = C.state;
+    var z = C.zoneOf(st.zone);
+    var label = z ? z.code : st.zone;
+
+    if (st.zoneMode === 'manual') {
+      el.textContent = 'Zon dipilih sendiri: ' + label +
+        '. Hidupkan suis di atas untuk ikut GPS.';
+      return;
+    }
+    if (st.gpsLat == null || st.gpsLon == null) {
+      el.textContent = 'Menunggu lokasi GPS… Zon semasa: ' + label + '.';
+      return;
+    }
+    var m = C.zoneFromCoords(st.gpsLat, st.gpsLon);
+    if (!m) {
+      el.textContent = 'Lokasi tidak dikenali. Zon semasa: ' + label + '.';
+      return;
+    }
+    var near = m.distance < 1
+      ? 'dalam zon'
+      : '~' + Math.round(m.distance) + ' km dari titik zon';
+    el.textContent = 'Ikut GPS: zon ' + m.code + ' (' + near + ').';
+  }
+
+  /**
+   * Tukar zon ikut koordinat GPS terakhir (jika mod auto).
+   * Pulangkan kod zon baharu, atau null jika tiada perubahan.
+   */
+  function applyZoneFromCoords(silent) {
+    var st = C.state;
+    if (st.zoneMode === 'manual') return null;
+    var m = C.zoneFromCoords(st.gpsLat, st.gpsLon);
+    if (!m) { updateZoneNote(); return null; }
+    if (m.code === st.zone) { updateZoneNote(); return null; }
+    st.zone = m.code;
+    commit();
+    if (!silent) toast('Zon ikut lokasi: ' + m.code);
+    return m.code;
+  }
+
   function syncSettings() {
     var st = C.state;
 
@@ -902,6 +946,12 @@
       sel.appendChild(o);
     });
     sel.value = st.zone;
+
+    if ($('setZoneAuto')) {
+      $('setZoneAuto').setAttribute('aria-checked',
+        st.zoneMode === 'manual' ? 'false' : 'true');
+    }
+    updateZoneNote();
 
     $('setQiblaMode').value = st.qiblaMode;
     $('setQBearing').value = Number(st.qiblaBearing.toFixed(2));
@@ -1002,15 +1052,35 @@
       C.state.gpsLon = pos.coords.longitude;
       C.saveState();
       renderQibla();
-      toast('GPS dikemas kini');
+      var z = applyZoneFromCoords(silent);
+      if (!silent) toast(z ? 'Zon ikut lokasi: ' + z : 'GPS dikemas kini');
+      else if (z) toast('Zon ikut lokasi: ' + z);
     }, function (err) {
       gpsBusy = false;
       var msg = 'Gagal dapat lokasi';
       if (err.code === 1) msg = 'Kebenaran lokasi ditolak';
       else if (err.code === 2) msg = 'Lokasi tidak tersedia';
       else if (err.code === 3) msg = 'Lokasi tamat masa';
-      toast(msg, 4200);
+      if (!silent) toast(msg, 4200);
     }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 });
+  }
+
+  /**
+   * Semasa app dibuka: pilih zon ikut GPS jika mod auto.
+   * APK sudah meminta kebenaran lokasi semasa mula, jadi teruskan.
+   * Pelayar: hanya tanya jika kebenaran lokasi sudah diberi.
+   */
+  function startGpsZone() {
+    if (C.state.zoneMode === 'manual') return;
+    applyZoneFromCoords(true); // guna koordinat cache dahulu (pantas)
+    if (!navigator.geolocation || !isSecure()) return;
+
+    if (nativeNotif()) { locate(true); return; }
+
+    if (!navigator.permissions || !navigator.permissions.query) return;
+    navigator.permissions.query({ name: 'geolocation' }).then(function (p) {
+      if (p.state === 'granted') locate(true);
+    }).catch(function () {});
   }
 
   /* ---------------------------------------------------------- d-pad nav */
@@ -1120,8 +1190,29 @@
     // ---- zon JAKIM
     $('setZone').addEventListener('change', function () {
       C.state.zone = this.value;
+      C.state.zoneMode = 'manual';
       commit();
       toast('Zon: ' + zoneText());
+    });
+
+    $('setZoneAuto').addEventListener('click', function () {
+      var on = this.getAttribute('aria-checked') !== 'true';
+      C.state.zoneMode = on ? 'auto' : 'manual';
+      C.saveState();
+      syncSettings();
+      if (!on) { toast('Zon dipilih sendiri'); return; }
+      var z = applyZoneFromCoords(true);
+      locate(false);
+      if (!z) toast('Zon akan ikut lokasi GPS');
+    });
+
+    $('btnZoneGps').addEventListener('click', function () {
+      if (C.state.zoneMode === 'manual') {
+        C.state.zoneMode = 'auto';
+        C.saveState();
+        syncSettings();
+      }
+      locate(false);
     });
 
     // ---- kemas kini data JAKIM
@@ -1491,6 +1582,9 @@
     tick();
     pushSchedule();
     pushWidget();
+
+    // Zon ikut GPS (jika mod auto) — guna cache dahulu, kemudian GPS.
+    startGpsZone();
 
     if ('serviceWorker' in navigator && isSecure()) {
       navigator.serviceWorker.register('sw.js').catch(function () {});

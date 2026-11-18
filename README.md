@@ -61,6 +61,15 @@ Waktu solat **bukan hasil pengiraan**. Ia dibaca terus dari jadual rasmi
 JAKIM (e-Solat) dan dipaparkan **bulat-bulat** seperti diterbitkan:
 
 - **60 zon rasmi** (WLY01, SGR01, JHR02, …) — pilih di **Tetapan → Zon JAKIM**.
+  - **Ikut lokasi GPS** (lalai, hidup): zon dipilih automatik daripada
+    koordinat peranti — titik rujukan terdekat bagi setiap zon. Zon pulau
+    (Langkawi, Tioman, Pulau Aur/Pemanggil, Labuan) hanya dipilih jika
+    peranti berada dalam jejarinya; zon khas (puncak gunung, kampung khas)
+    tidak dipilih automatik.
+  - Untuk **ubah sendiri**: matikan suis *Ikut lokasi GPS* (atau pilih zon
+    lain dalam senarai) — app akan kekal pada zon pilihan itu.
+  - Nota di bawah pemilih zon menunjukkan zon GPS semasa dan jarak ke titik
+    zon. Butang **Kemas kini lokasi** memaksa bacaan GPS baharu.
 - **Setahun penuh** dibenamkan dalam app (`js/jakim-data.js`, jana dari API
   e-Solat dengan `gen-jakim-data.ps1`), jadi app berfungsi **100% luar talian**.
 - Apabila JAKIM menerbitkan tahun baharu, tekan **Tetapan → Data JAKIM →
@@ -353,3 +362,6 @@ Waktu solat dibaca dari data rasmi JAKIM yang dibenam dalam app — tiada data
 dihantar ke mana-mana pelayan semasa kegunaan biasa. Kemas kini data (pilihan)
 memuat turun jadual dari e-Solat JAKIM sahaja. Tetapan disimpan dalam
 `localStorage` peranti.
+
+Koordinat GPS (untuk zon waktu solat dan arah kiblat) diproses **pada
+peranti sahaja** — ia tidak dihantar ke internet.
