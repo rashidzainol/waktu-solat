@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Baris 2: 4 sel waktu (Zohor, Asar, Maghrib, Isyak).
+     ID berasingan daripada widget_row.xml supaya RemoteViews dapat
+     mengemas kini kedua-dua baris (dahulu baris ini kosong). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal">
+
+    <LinearLayout android:id="@+id/wC4" style="@style/WidgetCell">
+        <TextView android:id="@+id/wK4" style="@style/WidgetCellLabel" />
+        <TextView android:id="@+id/wT4" style="@style/WidgetCellTime" />
+    </LinearLayout>
+
+    <LinearLayout android:id="@+id/wC5" style="@style/WidgetCell">
+        <TextView android:id="@+id/wK5" style="@style/WidgetCellLabel" />
+        <TextView android:id="@+id/wT5" style="@style/WidgetCellTime" />
+    </LinearLayout>
+
+    <LinearLayout android:id="@+id/wC6" style="@style/WidgetCell">
+        <TextView android:id="@+id/wK6" style="@style/WidgetCellLabel" />
+        <TextView android:id="@+id/wT6" style="@style/WidgetCellTime" />
+    </LinearLayout>
+
+    <LinearLayout android:id="@+id/wC7" style="@style/WidgetCell">
+        <TextView android:id="@+id/wK7" style="@style/WidgetCellLabel" />
+        <TextView android:id="@+id/wT7" style="@style/WidgetCellTime" />
+    </LinearLayout>
+
+</LinearLayout>

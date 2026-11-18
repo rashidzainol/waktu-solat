@@ -2,22 +2,22 @@
 <resources>
     <style name="WidgetCell">
         <item name="android:layout_width">0dp</item>
-        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_height">match_parent</item>
         <item name="android:layout_weight">1</item>
         <item name="android:orientation">vertical</item>
-        <item name="android:gravity">center_horizontal</item>
+        <item name="android:gravity">center</item>
         <item name="android:background">@drawable/widget_cell</item>
         <item name="android:layout_marginLeft">2dp</item>
         <item name="android:layout_marginRight">2dp</item>
-        <item name="android:paddingTop">4dp</item>
-        <item name="android:paddingBottom">4dp</item>
+        <item name="android:paddingTop">2dp</item>
+        <item name="android:paddingBottom">2dp</item>
     </style>
 
     <style name="WidgetCellLabel">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:textColor">#8ba39a</item>
-        <item name="android:textSize">10sp</item>
+        <item name="android:textSize">9.5sp</item>
         <item name="android:maxLines">1</item>
     </style>
 
@@ -25,7 +25,26 @@
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:textColor">#eaf3ef</item>
-        <item name="android:textSize">13sp</item>
+        <item name="android:textSize">13.5sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:maxLines">1</item>
+    </style>
+
+    <!-- Gaya kecil untuk notifikasi ringkasan senyap -->
+    <style name="NotifCellLabel">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">#8ba39a</item>
+        <item name="android:textSize">8sp</item>
+        <item name="android:maxLines">1</item>
+    </style>
+
+    <style name="NotifCellTime">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">1dp</item>
+        <item name="android:textColor">#eaf3ef</item>
+        <item name="android:textSize">11sp</item>
         <item name="android:textStyle">bold</item>
         <item name="android:maxLines">1</item>
     </style>

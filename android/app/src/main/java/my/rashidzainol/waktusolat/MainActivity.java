@@ -387,7 +387,8 @@ public class MainActivity extends Activity {
                     ",\"enabled\":" + enabled +
                     ",\"exact\":" + exact +
                     ",\"sound\":\"" + NotifReceiver.soundKind(MainActivity.this) + "\"" +
-                    ",\"audible\":" + audible + "}";
+                    ",\"audible\":" + audible +
+                    ",\"summary\":" + SummaryNotif.isOn(MainActivity.this) + "}";
         }
 
         /** Pilih bunyi: "chime" (loceng app) atau "alarm" (bunyi sistem). */
@@ -398,6 +399,20 @@ public class MainActivity extends Activity {
                 public void run() {
                     try {
                         NotifReceiver.setSoundKind(MainActivity.this, kind);
+                    } catch (Exception ignored) {
+                    }
+                }
+            });
+        }
+
+        /** Hidup/matikan ringkasan waktu solat dalam panel notifikasi. */
+        @JavascriptInterface
+        public void setSummary(final boolean on) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        SummaryNotif.setOn(MainActivity.this, on);
                     } catch (Exception ignored) {
                     }
                 }

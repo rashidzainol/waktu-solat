@@ -8,8 +8,8 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Color;
 import android.os.Build;
+import android.view.View;
 import android.widget.RemoteViews;
 
 import org.json.JSONArray;
@@ -20,11 +20,11 @@ import java.util.Date;
 import java.util.Locale;
 
 /**
- * Widget homescreen 4x2 — waktu solat hari ini & waktu seterusnya.
+ * Widget homescreen 4x2 — 8 waktu solat hari ini & waktu seterusnya.
  *
  * Data dihantar dari JavaScript melalui jambatan AndroidNotif.updateWidget(json)
- * dan disimpan dalam SharedPreferences. Kira detik dikemas kini setiap minit
- * melalui alarm RTC (tidak mengganggu tidur peranti).
+ * dan disimpan dalam SharedPreferences. Tick setiap minit mengemas kini widget,
+ * notifikasi ringkasan senyap, dan kiraan detik.
  */
 public class SolatWidget extends AppWidgetProvider {
 
@@ -42,42 +42,56 @@ public class SolatWidget extends AppWidgetProvider {
     };
     private static final String[] PRAYERS = { "fajr", "dhuhr", "asr", "maghrib", "isha" };
 
+    private static final int C_LABEL = 0xFF8BA39A;
+    private static final int C_TIME = 0xFFEAF3EF;
+    private static final int C_DIM_LABEL = 0xFF63776F;
+    private static final int C_DIM_TIME = 0xFFAFC2BA;
+    private static final int C_ACCENT = 0xFF34D399;
+
     /** Simpan data baharu dari JS & kemas kini semua widget. */
     public static void saveData(Context ctx, String json) {
         ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
                 .edit().putString(KEY_WIDGET, json).apply();
         updateAll(ctx);
+        ensureTick(ctx);
     }
 
     @Override
     public void onUpdate(Context ctx, AppWidgetManager mgr, int[] ids) {
         updateAll(ctx);
-        scheduleTick(ctx);
+        ensureTick(ctx);
     }
 
     @Override
     public void onEnabled(Context ctx) {
-        scheduleTick(ctx);
+        ensureTick(ctx);
     }
 
     @Override
     public void onDisabled(Context ctx) {
-        cancelTick(ctx);
+        // Kekalkan tick jika notifikasi ringkasan masih dihidupkan.
+        ensureTick(ctx);
     }
 
     @Override
     public void onReceive(Context ctx, Intent intent) {
         super.onReceive(ctx, intent);
         String action = intent != null ? intent.getAction() : null;
+
         if (ACTION_TICK.equals(action)) {
             updateAll(ctx);
-            scheduleTick(ctx);
+            ensureTick(ctx);
+        } else if (SummaryNotif.ACTION_HIDE.equals(action)) {
+            SummaryNotif.setOn(ctx, false);
         }
     }
 
     /* ------------------------------------------------------------ render */
 
     private static void updateAll(Context ctx) {
+        // Notifikasi ringkasan dikemas kini walaupun tiada widget di homescreen.
+        SummaryNotif.update(ctx);
+
         AppWidgetManager mgr = AppWidgetManager.getInstance(ctx);
         int[] ids = mgr.getAppWidgetIds(new ComponentName(ctx, SolatWidget.class));
         if (ids == null || ids.length == 0) return;
@@ -88,12 +102,15 @@ public class SolatWidget extends AppWidgetProvider {
         String nextName = null;
         String nextInfo = null;
         int nextIndex = -1;
+        String zone = "";
+        String hijri = "";
         long[] cellMs = new long[8];
 
         try {
             JSONObject data = new JSONObject(
                     ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
                             .getString(KEY_WIDGET, "{}"));
+            zone = data.optString("city", "");
             JSONArray days = data.optJSONArray("days");
             if (days != null) {
                 JSONObject today = null, tomorrow = null;
@@ -104,7 +121,7 @@ public class SolatWidget extends AppWidgetProvider {
                     if (todayStr.equals(d.optString("date"))) {
                         today = d;
                     } else if (tomorrow == null) {
-                        // hari pertama yang bukan hari ini (esok)
+                        // Hari pertama yang bukan hari ini (esok)
                         tomorrow = d;
                     }
                 }
@@ -113,28 +130,38 @@ public class SolatWidget extends AppWidgetProvider {
                     JSONObject t = today.optJSONObject("times");
                     if (t != null) {
                         hasData = true;
+                        hijri = today.optString("hijri", "");
                         for (int i = 0; i < 8; i++) cellMs[i] = t.optLong(ORDER[i], 0);
 
                         // waktu seterusnya
-                        long best = 0; String bestKey = null;
+                        long best = 0;
+                        String bestKey = null;
                         for (String p : PRAYERS) {
                             long ms = t.optLong(p, 0);
-                            if (ms > now && (best == 0 || ms < best)) { best = ms; bestKey = p; }
+                            if (ms > now && (best == 0 || ms < best)) {
+                                best = ms;
+                                bestKey = p;
+                            }
                         }
                         if (best == 0 && tomorrow != null) {
                             JSONObject t2 = tomorrow.optJSONObject("times");
                             if (t2 != null) {
                                 long ms = t2.optLong("fajr", 0);
-                                if (ms > 0) { best = ms; bestKey = "fajr"; }
+                                if (ms > 0) {
+                                    best = ms;
+                                    bestKey = "fajr";
+                                }
                             }
                         }
-                        if (best > 0) {
-                            nextName = labelOf(bestKey) + (t.optLong(bestKey) != best ? " · esok" : "");
-                            nextInfo = "pada " + hhmm(best) + " · lagi " + shortCd(best - now);
-                        }
                         if (bestKey != null) {
+                            boolean esok = t.optLong(bestKey, 0) != best;
+                            nextName = labelOf(bestKey) + (esok ? " · esok" : "");
+                            nextInfo = "pada " + hhmm(best) + " · lagi " + shortCd(best - now);
                             for (int i = 0; i < 8; i++) {
-                                if (ORDER[i].equals(bestKey)) { nextIndex = i; break; }
+                                if (ORDER[i].equals(bestKey)) {
+                                    nextIndex = i;
+                                    break;
+                                }
                             }
                         }
                     }
@@ -143,34 +170,36 @@ public class SolatWidget extends AppWidgetProvider {
         } catch (Exception ignored) {
         }
 
+        rv.setTextViewText(R.id.wZone, zone);
+        rv.setViewVisibility(R.id.wZone, zone.isEmpty() ? View.GONE : View.VISIBLE);
+
         if (hasData) {
-            rv.setTextViewText(R.id.wNextName, "Seterusnya: " + nextName);
-            rv.setTextViewText(R.id.wNextInfo, nextInfo);
-            for (int i = 0; i < 8; i++) {
-                int kid = ctx.getResources().getIdentifier("wK" + i, "id", ctx.getPackageName());
-                int tid = ctx.getResources().getIdentifier("wT" + i, "id", ctx.getPackageName());
-                rv.setTextViewText(kid, LABELS[i]);
-                rv.setTextViewText(tid, cellMs[i] > 0 ? hhmm(cellMs[i]) : "—");
-                boolean isNext = (i == nextIndex);
-                rv.setTextColor(kid, isNext ? 0xFF34D399 : 0xFF8BA39A);
-                rv.setTextColor(tid, isNext ? 0xFF34D399 : 0xFFEAF3EF);
-            }
+            rv.setTextViewText(R.id.wNextName,
+                    nextName != null ? "Seterusnya: " + nextName : "Waktu hari ini tamat");
+            rv.setTextViewText(R.id.wNextInfo, nextInfo != null ? nextInfo : "");
+            rv.setTextViewText(R.id.wDate, hijri);
         } else {
             rv.setTextViewText(R.id.wNextName, "Buka app untuk muat waktu");
             rv.setTextViewText(R.id.wNextInfo, "");
-            for (int i = 0; i < 8; i++) {
-                int kid = ctx.getResources().getIdentifier("wK" + i, "id", ctx.getPackageName());
-                int tid = ctx.getResources().getIdentifier("wT" + i, "id", ctx.getPackageName());
-                rv.setTextViewText(kid, LABELS[i]);
-                rv.setTextViewText(tid, "—");
-                rv.setTextColor(kid, 0xFF8BA39A);
-                rv.setTextColor(tid, 0xFFEAF3EF);
-            }
+            rv.setTextViewText(R.id.wDate, "");
         }
 
-        rv.setTextViewText(R.id.wTitle, "Waktu Solat");
-        rv.setTextViewText(R.id.wDate, new SimpleDateFormat("EEE, d MMM", new Locale("ms"))
-                .format(new Date(now)).replace(".", ""));
+        for (int i = 0; i < 8; i++) {
+            int cid = rid(ctx, "wC" + i);
+            int kid = rid(ctx, "wK" + i);
+            int tid = rid(ctx, "wT" + i);
+
+            rv.setTextViewText(kid, LABELS[i]);
+            rv.setTextViewText(tid, hasData && cellMs[i] > 0 ? hhmm(cellMs[i]) : "—");
+
+            boolean isNext = i == nextIndex;
+            boolean isPast = hasData && cellMs[i] > 0 && cellMs[i] <= now;
+
+            rv.setInt(cid, "setBackgroundResource",
+                    isNext ? R.drawable.widget_cell_next : R.drawable.widget_cell);
+            rv.setTextColor(kid, isNext ? C_ACCENT : isPast ? C_DIM_LABEL : C_LABEL);
+            rv.setTextColor(tid, isNext ? C_ACCENT : isPast ? C_DIM_TIME : C_TIME);
+        }
 
         // Klik widget → buka app
         Intent open = new Intent(ctx, MainActivity.class)
@@ -183,6 +212,10 @@ public class SolatWidget extends AppWidgetProvider {
     }
 
     /* ----------------------------------------------------------- helpers */
+
+    private static int rid(Context ctx, String name) {
+        return ctx.getResources().getIdentifier(name, "id", ctx.getPackageName());
+    }
 
     private static String labelOf(String key) {
         for (int i = 0; i < ORDER.length; i++) {
@@ -206,6 +239,23 @@ public class SolatWidget extends AppWidgetProvider {
     }
 
     /* ------------------------------------------------------------ minute tick */
+
+    /** Pastikan tick setiap minit aktif selagi ada widget atau ringkasan notifikasi. */
+    public static void ensureTick(Context ctx) {
+        boolean hasWidget;
+        try {
+            AppWidgetManager mgr = AppWidgetManager.getInstance(ctx);
+            int[] ids = mgr.getAppWidgetIds(new ComponentName(ctx, SolatWidget.class));
+            hasWidget = ids != null && ids.length > 0;
+        } catch (Exception e) {
+            hasWidget = false;
+        }
+        if (hasWidget || SummaryNotif.isOn(ctx)) {
+            scheduleTick(ctx);
+        } else {
+            cancelTick(ctx);
+        }
+    }
 
     private static void scheduleTick(Context ctx) {
         AlarmManager am = (AlarmManager) ctx.getSystemService(Context.ALARM_SERVICE);

@@ -534,6 +534,7 @@
       if ($('popupGuide')) { $('popupGuide').hidden = true; $('popupGuide').open = false; }
       if (permBtn) permBtn.hidden = true;
       if (testBtn) testBtn.hidden = true;
+      if ($('summaryRow')) $('summaryRow').hidden = true;
       updateBell();
       return;
     }
@@ -544,9 +545,17 @@
     if ($('notifSoundRow')) $('notifSoundRow').hidden = !st.notify;
     if ($('soundChips')) $('soundChips').hidden = !st.notify;
     if ($('soundLinkRow')) $('soundLinkRow').hidden = !st.notify;
+    if ($('summaryRow')) $('summaryRow').hidden = !st.notify;
     if ($('popupGuide')) {
       $('popupGuide').hidden = !st.notify;
       if (!st.notify) $('popupGuide').open = false;
+    }
+
+    // Ringkasan di notifikasi: suis ikut status Android (lalai: hidup).
+    var summarySw = $('setSummary');
+    if (summarySw) {
+      var sumOn = (!s || s.summary !== false);
+      summarySw.setAttribute('aria-checked', sumOn ? 'true' : 'false');
     }
 
     // Pilihan bunyi: cip ikut pilihan yang disimpan di bahagian Android.
@@ -661,18 +670,23 @@
     try {
       if (!window.AndroidNotif || !window.AndroidNotif.updateWidget) return;
       var days = [];
-      [new Date(), nextDay(new Date())].forEach(function (day) {
+      var base = new Date();
+      // 14 hari supaya widget & ringkasan notifikasi kekal tepat walaupun
+      // app tidak dibuka setiap hari.
+      for (var i = 0; i < 14; i++) {
+        var day = new Date(base.getFullYear(), base.getMonth(), base.getDate() + i);
         var times = C.computeTimes(day);
-        if (times.missing) return;
+        if (times.missing) continue;
         var t = {};
         C.ORDER.forEach(function (k) {
           t[k] = times[k] ? times[k].getTime() : 0;
         });
         days.push({
           date: day.getFullYear() + '-' + C.pad2(day.getMonth() + 1) + '-' + C.pad2(day.getDate()),
+          hijri: hijriText(day),
           times: t
         });
-      });
+      }
       window.AndroidNotif.updateWidget(JSON.stringify({
         city: C.state.zone, days: days
       }));
@@ -1329,6 +1343,23 @@
         toast('Tidak dapat membuka tetapan bunyi');
       }
     });
+
+    var summaryBtn = $('setSummary');
+    if (summaryBtn) {
+      summaryBtn.addEventListener('click', function () {
+        var A = nativeNotif();
+        if (!A || typeof A.setSummary !== 'function') {
+          toast('Ringkasan notifikasi hanya tersedia dalam app Android');
+          return;
+        }
+        var on = summaryBtn.getAttribute('aria-checked') !== 'true';
+        try { A.setSummary(on); } catch (e) {}
+        summaryBtn.setAttribute('aria-checked', on ? 'true' : 'false');
+        toast(on ? 'Ringkasan notifikasi dihidupkan' : 'Ringkasan notifikasi dimatikan');
+        // kemas kini paparan (kiraan detik akan mula/berhenti)
+        setTimeout(refreshNotifUI, 400);
+      });
+    }
 
     $('btnGuideSettings').addEventListener('click', function () {
       var A = nativeNotif();

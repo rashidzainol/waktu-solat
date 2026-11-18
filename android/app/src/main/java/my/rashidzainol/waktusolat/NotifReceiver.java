@@ -56,6 +56,8 @@ public class NotifReceiver extends BroadcastReceiver {
 
             show(ctx, label, ms, key);
             PrayerAlarms.reschedule(ctx);
+            // Waktu seterusnya berubah → kemas kini ringkasan notifikasi.
+            try { SummaryNotif.update(ctx); } catch (Exception ignored) {}
         } else if (ACTION_MAINTAIN.equals(action)) {
             // Penyelenggaraan harian: isi semula jadual & alarm seterusnya.
             PrayerAlarms.reschedule(ctx);
@@ -185,6 +187,9 @@ public class NotifReceiver extends BroadcastReceiver {
         Uri alarmSound = alarmUri();
         if (alarmSound != null) alarm.setSound(alarmSound, alarmAttributes());
         nm.createNotificationChannel(alarm);
+
+        // Saluran senyap untuk ringkasan waktu solat.
+        try { SummaryNotif.ensureChannel(ctx); } catch (Exception ignored) {}
     }
 
     private static void applyStyle(NotificationChannel ch) {

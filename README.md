@@ -340,13 +340,23 @@ Satu APK untuk semua peranti — Android TV, Google TV, telefon dan tablet.
 Pada telefon/tablet, **tekan lama pada homescreen → Widgets → Waktu Solat**
 untuk menambah widget 4×2 yang menunjukkan:
 
+- Tajuk: nama app + kod zon + tarikh Hijri
 - Waktu seterusnya dengan kira detik (dikemas kini setiap minit)
 - Grid 8 waktu hari ini: Imsak, Subuh, Syuruk, Duha, Zohor, Asar, Maghrib, Isyak
+  (sel waktu seterusnya disorot, waktu lepas dimalapkan)
 - Klik widget untuk buka app
 
 Widget dikemas kini oleh app; buka app sekali selepas pasang untuk memuatkan
 waktu pertama. Tablet menggunakan paparan landskap/potret mengikut cara
 peranti dipegang.
+
+### Ringkasan di notifikasi (pilihan)
+
+App juga menyediakan **notifikasi senyap berterusan** yang memaparkan zon,
+tarikh Hijri, 6 waktu hari ini dan kiraan detik ke waktu seterusnya — seperti
+widget dalam panel notifikasi. Boleh dihidupkan/matikan di **Tetapan →
+Notifikasi → Ringkasan di notifikasi** (butang "Sembunyi" dalam notifikasi
+juga mematikannya). Notifikasi ini tidak berbunyi dan tidak mengganggu.
 
 ---
 

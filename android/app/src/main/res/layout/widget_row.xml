@@ -1,26 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Satu baris 4 sel waktu (label + masa). Diletak dua kali dalam widget_solat. -->
+<!-- Baris 1: 4 sel waktu (Imsak, Subuh, Syuruk, Duha). -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="match_parent"
     android:orientation="horizontal">
 
-    <LinearLayout style="@style/WidgetCell">
+    <LinearLayout android:id="@+id/wC0" style="@style/WidgetCell">
         <TextView android:id="@+id/wK0" style="@style/WidgetCellLabel" />
         <TextView android:id="@+id/wT0" style="@style/WidgetCellTime" />
     </LinearLayout>
 
-    <LinearLayout style="@style/WidgetCell">
+    <LinearLayout android:id="@+id/wC1" style="@style/WidgetCell">
         <TextView android:id="@+id/wK1" style="@style/WidgetCellLabel" />
         <TextView android:id="@+id/wT1" style="@style/WidgetCellTime" />
     </LinearLayout>
 
-    <LinearLayout style="@style/WidgetCell">
+    <LinearLayout android:id="@+id/wC2" style="@style/WidgetCell">
         <TextView android:id="@+id/wK2" style="@style/WidgetCellLabel" />
         <TextView android:id="@+id/wT2" style="@style/WidgetCellTime" />
     </LinearLayout>
 
-    <LinearLayout style="@style/WidgetCell">
+    <LinearLayout android:id="@+id/wC3" style="@style/WidgetCell">
         <TextView android:id="@+id/wK3" style="@style/WidgetCellLabel" />
         <TextView android:id="@+id/wT3" style="@style/WidgetCellTime" />
     </LinearLayout>

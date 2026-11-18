@@ -20,6 +20,8 @@ public class BootReceiver extends BroadcastReceiver {
                 || Intent.ACTION_TIME_CHANGED.equals(action)
                 || Intent.ACTION_TIMEZONE_CHANGED.equals(action)) {
             PrayerAlarms.reschedule(ctx);
+            try { SummaryNotif.update(ctx); } catch (Exception ignored) {}
+            try { SolatWidget.ensureTick(ctx); } catch (Exception ignored) {}
         }
     }
 }

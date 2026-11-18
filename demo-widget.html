@@ -111,7 +111,10 @@
   .widget:active{transform:scale(.98)}
   .w-top{display:flex;justify-content:space-between;align-items:center}
   .w-title{color:var(--accent);font-size:11.5px;font-weight:700}
+  .w-zone{display:inline-block;margin-left:5px;padding:1px 5px;border-radius:5px;background:rgba(255,255,255,.06);border:1px solid #1f2f2a;color:var(--muted);font-size:9px}
   .w-date{color:var(--muted);font-size:10.5px}
+  .w-cell.past .k{color:#63776f}
+  .w-cell.past .t{color:#afc2ba}
   .w-next{display:flex;justify-content:space-between;align-items:center;margin-top:3px}
   .w-nextname{font-size:14.5px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .w-nextinfo{color:var(--accent);font-size:12.5px;white-space:nowrap;margin-left:8px}
@@ -188,6 +191,20 @@
     padding:14px 16px;font-size:13.5px;color:var(--muted);
   }
   .note b{color:var(--text);display:block;margin-bottom:4px;font-size:14px}
+  /* ringkasan notifikasi senyap */
+  .summary{margin-top:30px;width:min(420px,94vw)}
+  .summary-card{background:rgba(15,26,23,.95);border:1px solid #1f2f2a;border-radius:14px;padding:10px 12px;box-shadow:0 12px 36px rgba(0,0,0,.45)}
+  .s-top{display:flex;justify-content:space-between;align-items:center}
+  .s-zone{color:var(--accent);font-size:11px;font-weight:700}
+  .s-date{color:var(--muted);font-size:9.5px}
+  .s-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:2px;margin-top:6px}
+  .s-cell{text-align:center;padding:2px 0}
+  .s-cell .k{color:var(--muted);font-size:8.5px}
+  .s-cell .t{color:var(--text);font-size:11.5px;font-weight:700;margin-top:1px}
+  .s-cell.next .k,.s-cell.next .t{color:var(--accent)}
+  .s-cell.past .k{color:#63776f}
+  .s-cell.past .t{color:#afc2ba}
+  .s-next{color:var(--muted);font-size:9.5px;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .foot{margin-top:26px;color:#5c6f66;font-size:12.5px}
   .foot a{color:var(--accent);text-decoration:none}
 </style>
@@ -230,6 +247,7 @@
         <div class="widget" onclick="azan()">
           <div class="w-top">
             <span class="w-title">Waktu Solat</span>
+            <span class="w-zone">SWK08</span>
             <span class="w-date" id="wDate">—</span>
           </div>
           <div class="w-next">
@@ -259,6 +277,7 @@
   <div class="zoom widget" style="cursor:default" onclick="azan()">
     <div class="w-top">
       <span class="w-title">Waktu Solat</span>
+      <span class="w-zone">SWK08</span>
       <span class="w-date" id="zDate">—</span>
     </div>
     <div class="w-next">
@@ -266,6 +285,18 @@
       <span class="w-nextinfo" id="zNextInfo">—</span>
     </div>
     <div class="w-grid" id="zGrid"></div>
+  </div>
+
+  <!-- ============ RINGKASAN NOTIFIKASI ============ -->
+  <div class="summary">
+    <div class="summary-card">
+      <div class="s-top">
+        <span class="s-zone">Waktu Solat · SWK08</span>
+        <span class="s-date">8 Jamadilakhir 1448 H</span>
+      </div>
+      <div class="s-grid" id="sGrid"></div>
+      <div class="s-next" id="sNext">Seterusnya Zohor · 13:23 · lagi 2j 28m</div>
+    </div>
   </div>
 
   <div class="notes">
@@ -290,6 +321,10 @@ var TIMES = [
   { k:'isha',    label:'Isyak',   h:20, m:17 }
 ];
 var PRAYERS = ['fajr','dhuhr','asr','maghrib','isha'];
+var SUMMARY = [
+  {k:'fajr',label:'Subuh'},{k:'syuruk',label:'Syuruk'},{k:'dhuhr',label:'Zohor'},
+  {k:'asr',label:'Asar'},{k:'maghrib',label:'Maghrib'},{k:'isha',label:'Isyak'}
+];
 var DAYS = ['Ahad','Isnin','Selasa','Rabu','Khamis','Jumaat','Sabtu'];
 var MONTHS = ['Jan','Feb','Mac','Apr','Mei','Jun','Jul','Ogo','Sep','Okt','Nov','Dis'];
 
@@ -328,8 +363,7 @@ function fill(prefix){
   var now = new Date();
   var nx = nextOf(now);
 
-  document.getElementById(prefix+'Date').textContent =
-    DAYS[now.getDay()] + ', ' + now.getDate() + ' ' + MONTHS[now.getMonth()];
+  document.getElementById(prefix+'Date').textContent = '8 Jamadilakhir 1448 H';
   document.getElementById(prefix+'NextName').textContent = 'Seterusnya: ' +
     nx.label + (nx.tomorrow ? ' · esok' : '');
   document.getElementById(prefix+'NextInfo').textContent =
@@ -349,12 +383,34 @@ function fill(prefix){
   grid.innerHTML = html;
 }
 
+function fillSummary(){
+  var now = new Date();
+  var nx = nextOf(now);
+  var list = todayTimes();
+  var byK = {};
+  list.forEach(function(t){ byK[t.k]=t.date; });
+  var html = '';
+  SUMMARY.forEach(function(s){
+    var d = byK[s.k];
+    var cls = 's-cell';
+    if (nx.k === s.k && !nx.tomorrow) cls += ' next';
+    else if (d && d < now) cls += ' past';
+    html += '<div class="'+cls+'"><div class="k">'+s.label+'</div><div class="t">'+
+            pad(d.getHours())+':'+pad(d.getMinutes())+'</div></div>';
+  });
+  document.getElementById('sGrid').innerHTML = html;
+  document.getElementById('sNext').textContent =
+    'Seterusnya ' + nx.label + ' · ' + pad(nx.date.getHours()) + ':' + pad(nx.date.getMinutes()) +
+    ' · lagi ' + shortCd(nx.date - now);
+}
+
 function tick(){
   var now = new Date();
   document.getElementById('sbTime').textContent =
     now.getHours() + ':' + pad(now.getMinutes());
   fill('w');
   fill('z');
+  fillSummary();
 }
 
 var azanTimer = null;
