@@ -528,6 +528,9 @@
       if (sw) sw.hidden = true;
       if ($('notifPickRow')) $('notifPickRow').hidden = true;
       if (chips) chips.hidden = true;
+      if ($('notifSoundRow')) $('notifSoundRow').hidden = true;
+      if ($('soundChips')) $('soundChips').hidden = true;
+      if ($('soundLinkRow')) $('soundLinkRow').hidden = true;
       if (permBtn) permBtn.hidden = true;
       if (testBtn) testBtn.hidden = true;
       updateBell();
@@ -537,6 +540,17 @@
     if (sw) sw.hidden = false;
     if ($('notifPickRow')) $('notifPickRow').hidden = false;
     if (chips) chips.hidden = false;
+    if ($('notifSoundRow')) $('notifSoundRow').hidden = !st.notify;
+    if ($('soundChips')) $('soundChips').hidden = !st.notify;
+    if ($('soundLinkRow')) $('soundLinkRow').hidden = !st.notify;
+
+    // Pilihan bunyi: cip ikut pilihan yang disimpan di bahagian Android.
+    var soundChips = $('soundChips');
+    if (soundChips && s && s.sound) {
+      Array.prototype.forEach.call(soundChips.children, function (b) {
+        b.setAttribute('aria-pressed', b.dataset.sound === s.sound ? 'true' : 'false');
+      });
+    }
 
     if (!st.notify) {
       if (textEl) textEl.textContent = 'Notifikasi dimatikan.';
@@ -579,6 +593,13 @@
       return;
     }
 
+    if (s.audible === false) {
+      if (statusEl) statusEl.classList.add('warn');
+      if (textEl) textEl.textContent = 'Bunyi dimatikan dalam tetapan Android — notis keluar senyap.';
+      updateBell();
+      return;
+    }
+
     if (statusEl) statusEl.classList.add('ok');
     if (textEl) {
       textEl.textContent = s.exact === false
@@ -595,7 +616,7 @@
     var s = nativeStatus();
     var canCheck = !!A && typeof A.status === 'function';
     var warn = canCheck && C.state.notify &&
-      (!s || !s.permission || !s.enabled || !notifyKeys().length);
+      (!s || !s.permission || !s.enabled || s.audible === false || !notifyKeys().length);
     if (dot) dot.hidden = !warn;
     if (btn) btn.classList.toggle('on', !!A && C.state.notify && !warn);
   }
@@ -1183,6 +1204,34 @@
         refreshNotifUI();
         pushSchedule();
       });
+    });
+
+    Array.prototype.forEach.call($('soundChips').children, function (b) {
+      b.addEventListener('click', function () {
+        var A = nativeNotif();
+        if (!A || typeof A.setSound !== 'function') {
+          toast('Pilihan bunyi hanya tersedia dalam app Android');
+          return;
+        }
+        var kind = b.dataset.sound === 'alarm' ? 'alarm' : 'chime';
+        try { A.setSound(kind); } catch (e) {}
+        Array.prototype.forEach.call($('soundChips').children, function (x) {
+          x.setAttribute('aria-pressed', x === b ? 'true' : 'false');
+        });
+        toast(kind === 'alarm' ? 'Nada penggera dipilih' : 'Loceng dipilih');
+        setTimeout(refreshNotifUI, 350);
+      });
+    });
+
+    $('btnSoundSettings').addEventListener('click', function () {
+      var A = nativeNotif();
+      if (!A || typeof A.openSoundSettings !== 'function') {
+        toast('Tetapan bunyi hanya tersedia dalam app Android');
+        return;
+      }
+      try { A.openSoundSettings(); } catch (e) {
+        toast('Tidak dapat membuka tetapan bunyi');
+      }
     });
 
     // ---- theme

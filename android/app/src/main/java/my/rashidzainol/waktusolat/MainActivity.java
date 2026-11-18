@@ -375,9 +375,56 @@ public class MainActivity extends Activity {
                 AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
                 exact = am == null || am.canScheduleExactAlarms();
             }
+
+            boolean audible;
+            try {
+                audible = NotifReceiver.audible(MainActivity.this);
+            } catch (Exception e) {
+                audible = true;
+            }
+
             return "{\"permission\":" + permission +
                     ",\"enabled\":" + enabled +
-                    ",\"exact\":" + exact + "}";
+                    ",\"exact\":" + exact +
+                    ",\"sound\":\"" + NotifReceiver.soundKind(MainActivity.this) + "\"" +
+                    ",\"audible\":" + audible + "}";
+        }
+
+        /** Pilih bunyi: "chime" (loceng app) atau "alarm" (bunyi sistem). */
+        @JavascriptInterface
+        public void setSound(final String kind) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        NotifReceiver.setSoundKind(MainActivity.this, kind);
+                    } catch (Exception ignored) {
+                    }
+                }
+            });
+        }
+
+        /** Buka tetapan saluran notifikasi (pilih bunyi sendiri / kuatkan). */
+        @JavascriptInterface
+        public void openSoundSettings() {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (Build.VERSION.SDK_INT < 26) {
+                        openNotificationSettings();
+                        return;
+                    }
+                    try {
+                        Intent i = new Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
+                                .putExtra(Settings.EXTRA_APP_PACKAGE, getPackageName())
+                                .putExtra(Settings.EXTRA_CHANNEL_ID,
+                                        NotifReceiver.channelId(MainActivity.this));
+                        startActivity(i);
+                    } catch (Exception e) {
+                        openNotificationSettings();
+                    }
+                }
+            });
         }
 
         @JavascriptInterface

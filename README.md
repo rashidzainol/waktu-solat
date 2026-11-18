@@ -93,6 +93,10 @@ Notifikasi berfungsi dalam **APK Android** (bukan dalam pelayar). Tetapan di
 
 - **Suis utama** — hidup/matikan semua notifikasi waktu solat.
 - **Waktu yang berbunyi** — pilih Subuh, Zohor, Asar, Maghrib dan/atau Isyak.
+- **Bunyi notifikasi** — **Nada penggera** (bunyi penggera peranti, lalai) atau
+  **Loceng** (bunyi lembut bawaan app). Kedua-duanya menggunakan strim
+  **ALARM**, jadi notifikasi tetap berbunyi walaupun telefon dalam mod
+  senyap/getar dan dibenarkan semasa "Jangan ganggu".
 - **Status** — app menunjukkan sama ada kebenaran notifikasi sudah diberi.
   Jika belum, tekan **Benarkan** (Android 13+ akan bertanya sekali).
 - **Uji notifikasi** — hantar notifikasi contoh serta-merta untuk semakan.
@@ -103,8 +107,10 @@ masa/zon waktu, atau kemas kini app — jadi notifikasi tidak putus walaupun
 app tidak dibuka. Selepas 31 Disember, kemas kini data JAKIM untuk tahun
 baharu supaya jadual diteruskan.
 
-Jika notifikasi masih senyap, semak **Tetapan Android → App → Waktu Solat →
-Notifikasi** (saluran "Waktu Solat" mesti dibenarkan dengan bunyi).
+Jika notifikasi masih senyap: dalam app, tekan **Tetapan bunyi/kelantangan
+Android** (pautan di bawah pilihan bunyi) dan pastikan saluran
+"Waktu Solat (nada penggera)" atau "Waktu Solat (loceng)" mempunyai bunyi
+dan tidak disekat. Kelantangan penggera Android juga mesti dinaikkan.
 
 ---
 

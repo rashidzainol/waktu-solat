@@ -1,5 +1,5 @@
 /* Service worker — offline app shell */
-const CACHE = 'waktu-solat-v9';
+const CACHE = 'waktu-solat-v10';
 const ASSETS = [
   './',
   './index.html',
