@@ -19,13 +19,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-/**
- * Kelas asas untuk semua varian widget homescreen Waktu Solat.
- *
- * Varian (Full / Ringkas / Simpel) melanjutkan kelas ini dan hanya
- * mendefinisikan susun atur (layout) serta senarai waktu yang dipapar.
- * Logik data, tick setiap minit, dan notifikasi ringkasan dikongsi.
- */
 public abstract class SolatWidgetBase extends AppWidgetProvider {
 
     public static final String ACTION_TICK = "my.rashidzainol.waktusolat.WIDGET_TICK";
@@ -37,22 +30,53 @@ public abstract class SolatWidgetBase extends AppWidgetProvider {
 
     protected static final String[] PRAYERS = { "fajr", "dhuhr", "asr", "maghrib", "isha" };
 
-    protected static final int C_LABEL = 0xFF8BA39A;
-    protected static final int C_TIME = 0xFFEAF3EF;
-    protected static final int C_DIM_LABEL = 0xFF63776F;
-    protected static final int C_DIM_TIME = 0xFFAFC2BA;
-    protected static final int C_ACCENT = 0xFF34D399;
-
-    /* ------------------------------ data ------------------------------ */
-
     public static final class Data {
         public String zone = "";
         public String hijri = "";
+        public String theme = "dark";
         public boolean hasData = false;
         public String nextKey = null;
         public long nextMs = 0;
         public boolean nextTomorrow = false;
         public java.util.Map<String, Long> times = new java.util.HashMap<>();
+    }
+
+    public static final class Palette {
+        public final int bgRes;
+        public final int title;
+        public final int zone;
+        public final int date;
+        public final int nextName;
+        public final int nextInfo;
+        public final int cellLabel;
+        public final int cellTime;
+        public final int dimLabel;
+        public final int dimTime;
+        public final int accent;
+        public final int chipBg;
+        public Palette(int bgRes, int title, int zone, int date, int nextName, int nextInfo,
+                      int cellLabel, int cellTime, int dimLabel, int dimTime, int accent, int chipBg) {
+            this.bgRes = bgRes; this.title = title; this.zone = zone; this.date = date;
+            this.nextName = nextName; this.nextInfo = nextInfo; this.cellLabel = cellLabel;
+            this.cellTime = cellTime; this.dimLabel = dimLabel; this.dimTime = dimTime;
+            this.accent = accent; this.chipBg = chipBg;
+        }
+    }
+
+    protected static Palette palette(String theme) {
+        if ("light".equals(theme)) {
+            return new Palette(R.drawable.widget_bg_light,
+                    0xFF0C8F63, 0xFF52655C, 0xFF52655C, 0xFF14211B, 0xFF0C8F63,
+                    0xFF52655C, 0xFF14211B, 0xFF9AAEA5, 0xFF8A9E95, 0xFF0C8F63, 0xFFE3EBE6);
+        }
+        if ("minimal".equals(theme)) {
+            return new Palette(R.drawable.widget_bg_minimal,
+                    0xFF111111, 0xFF555552, 0xFF555552, 0xFF111111, 0xFF111111,
+                    0xFF555552, 0xFF111111, 0xFF9A9A96, 0xFF8A8A86, 0xFF111111, 0xFFE6E6E4);
+        }
+        return new Palette(R.drawable.widget_bg,
+                0xFF34D399, 0xFF8BA39A, 0xFF8BA39A, 0xFFEAF3EF, 0xFF34D399,
+                0xFF8BA39A, 0xFFEAF3EF, 0xFF63776F, 0xFFAFC2BA, 0xFF34D399, 0x14FFFFFF);
     }
 
     protected static Data loadData(Context ctx) {
@@ -63,6 +87,7 @@ public abstract class SolatWidgetBase extends AppWidgetProvider {
                     ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
                             .getString(KEY_WIDGET, "{}"));
             d.zone = data.optString("city", "");
+            d.theme = data.optString("theme", "dark");
             JSONArray days = data.optJSONArray("days");
             if (days != null) {
                 String todayStr = new SimpleDateFormat("yyyy-MM-dd", Locale.US)
@@ -86,7 +111,6 @@ public abstract class SolatWidgetBase extends AppWidgetProvider {
                             String k = it.next();
                             d.times.put(k, t.optLong(k, 0));
                         }
-                        // waktu seterusnya
                         long best = 0;
                         String bestKey = null;
                         for (String p : PRAYERS) {
@@ -119,10 +143,8 @@ public abstract class SolatWidgetBase extends AppWidgetProvider {
         return d;
     }
 
-    /* --------------------------- render helper --------------------------- */
-
     protected static void applyCell(RemoteViews rv, Context ctx, int i,
-                                   String[] keys, String[] labels, Data d, long now) {
+                                   String[] keys, String[] labels, Data d, Palette p, long now) {
         int cid = ctx.getResources().getIdentifier("wC" + i, "id", ctx.getPackageName());
         int kid = ctx.getResources().getIdentifier("wK" + i, "id", ctx.getPackageName());
         int tid = ctx.getResources().getIdentifier("wT" + i, "id", ctx.getPackageName());
@@ -133,37 +155,50 @@ public abstract class SolatWidgetBase extends AppWidgetProvider {
 
         boolean isNext = key.equals(d.nextKey) && !d.nextTomorrow;
         boolean isPast = d.hasData && ms > 0 && ms <= now;
+        int nextRes = R.drawable.widget_cell_next;
+        if ("light".equals(d.theme)) nextRes = R.drawable.widget_cell_next_light;
+        else if ("minimal".equals(d.theme)) nextRes = R.drawable.widget_cell_next_minimal;
         rv.setInt(cid, "setBackgroundResource",
-                isNext ? R.drawable.widget_cell_next : R.drawable.widget_cell);
-        rv.setTextColor(kid, isNext ? C_ACCENT : isPast ? C_DIM_LABEL : C_LABEL);
-        rv.setTextColor(tid, isNext ? C_ACCENT : isPast ? C_DIM_TIME : C_TIME);
+                isNext ? nextRes : R.drawable.widget_cell);
+        rv.setTextColor(kid, isNext ? p.accent : isPast ? p.dimLabel : p.cellLabel);
+        rv.setTextColor(tid, isNext ? p.accent : isPast ? p.dimTime : p.cellTime);
     }
 
-    protected static void finishRender(RemoteViews rv, Context ctx, Data d, long now) {
+    protected static void finishRender(RemoteViews rv, Context ctx, Data d, Palette p, long now) {
         int zid = ctx.getResources().getIdentifier("wZone", "id", ctx.getPackageName());
         int did = ctx.getResources().getIdentifier("wDate", "id", ctx.getPackageName());
         int nid = ctx.getResources().getIdentifier("wNextName", "id", ctx.getPackageName());
         int iid = ctx.getResources().getIdentifier("wNextInfo", "id", ctx.getPackageName());
+        int tid = ctx.getResources().getIdentifier("wTitle", "id", ctx.getPackageName());
+        if (tid != 0) rv.setTextColor(tid, p.title);
         if (zid != 0) {
             rv.setTextViewText(zid, d.zone);
             rv.setViewVisibility(zid, (d.zone == null || d.zone.isEmpty()) ? View.GONE : View.VISIBLE);
+            rv.setTextColor(zid, p.zone);
+            rv.setInt(zid, "setBackgroundColor", p.chipBg);
         }
         if (did != 0) {
             rv.setTextViewText(did, d.hasData ? d.hijri : "");
+            rv.setTextColor(did, p.date);
         }
         if (d.hasData) {
             String nextName = d.nextKey != null
-                    ? labelOf(d.nextKey) + (d.nextTomorrow ? " \u00b7 esok" : "")
+                    ? labelOf(d.nextKey) + (d.nextTomorrow ? " · esok" : "")
                     : null;
             if (nid != 0) {
                 rv.setTextViewText(nid,
                         nextName != null ? "Seterusnya: " + nextName : "Waktu hari ini tamat");
+                rv.setTextColor(nid, p.nextName);
             }
             if (iid != 0) {
-                rv.setTextViewText(iid, d.nextMs > 0 ? "pada " + hhmm(d.nextMs) + " \u00b7 lagi " + shortCd(d.nextMs - now) : "");
+                rv.setTextViewText(iid, d.nextMs > 0 ? "pada " + hhmm(d.nextMs) + " · lagi " + shortCd(d.nextMs - now) : "");
+                rv.setTextColor(iid, p.nextInfo);
             }
         } else {
-            if (nid != 0) rv.setTextViewText(nid, "Buka app untuk muat waktu");
+            if (nid != 0) {
+                rv.setTextViewText(nid, "Buka app untuk muat waktu");
+                rv.setTextColor(nid, p.nextName);
+            }
             if (iid != 0) rv.setTextViewText(iid, "");
         }
     }
@@ -180,17 +215,28 @@ public abstract class SolatWidgetBase extends AppWidgetProvider {
         RemoteViews rv = new RemoteViews(ctx.getPackageName(), layoutRes);
         long now = System.currentTimeMillis();
         Data d = loadData(ctx);
+        Palette p = palette(d.theme);
+
+        rv.setInt(R.id.widgetRoot, "setBackgroundResource", p.bgRes);
 
         if (simpleMode) {
-            rv.setTextViewText(R.id.wZone, d.zone);
-            rv.setViewVisibility(R.id.wZone,
-                    (d.zone == null || d.zone.isEmpty()) ? View.GONE : View.VISIBLE);
-            // waktu sekarang
+            int zid = ctx.getResources().getIdentifier("wZone", "id", ctx.getPackageName());
+            int did = ctx.getResources().getIdentifier("wDate", "id", ctx.getPackageName());
+            int clid = ctx.getResources().getIdentifier("wCurLabel", "id", ctx.getPackageName());
+            int ctid = ctx.getResources().getIdentifier("wCurTime", "id", ctx.getPackageName());
+            int nid = ctx.getResources().getIdentifier("wNextName", "id", ctx.getPackageName());
+            int iid = ctx.getResources().getIdentifier("wNextInfo", "id", ctx.getPackageName());
+            int tid = ctx.getResources().getIdentifier("wTitle", "id", ctx.getPackageName());
+            if (tid != 0) rv.setTextColor(tid, p.title);
+            if (zid != 0) {
+                rv.setTextViewText(zid, d.zone);
+                rv.setViewVisibility(zid, (d.zone == null || d.zone.isEmpty()) ? View.GONE : View.VISIBLE);
+                rv.setTextColor(zid, p.zone);
+                rv.setInt(zid, "setBackgroundColor", p.chipBg);
+            }
             String curLabel = "—";
             String curTime = "—";
-            long curMs = 0;
             if (d.hasData) {
-                // cari waktu solat terakhir yang telah masuk
                 long best = 0; String bestKey = null;
                 for (String k : PRAYERS) {
                     long ms = d.times.containsKey(k) ? d.times.get(k) : 0;
@@ -200,43 +246,56 @@ public abstract class SolatWidgetBase extends AppWidgetProvider {
                 }
                 if (bestKey != null) {
                     curLabel = labelOf(bestKey);
-                    curMs = best;
                     curTime = hhmm(best);
                 }
             }
-            rv.setTextViewText(R.id.wCurLabel, "Sekarang: " + curLabel);
-            rv.setTextViewText(R.id.wCurTime, curTime);
+            if (clid != 0) {
+                rv.setTextViewText(clid, "Sekarang: " + curLabel);
+                rv.setTextColor(clid, p.nextName);
+            }
+            if (ctid != 0) {
+                rv.setTextViewText(ctid, curTime);
+                rv.setTextColor(ctid, p.accent);
+            }
             if (d.hasData) {
                 String nextName = d.nextKey != null
                         ? labelOf(d.nextKey) + (d.nextTomorrow ? " · esok" : "")
                         : "—";
-                rv.setTextViewText(R.id.wNextName, "Seterusnya: " + nextName);
-                rv.setTextViewText(R.id.wNextInfo,
-                        d.nextMs > 0 ? "pada " + hhmm(d.nextMs) + " · lagi " + shortCd(d.nextMs - now) : "");
-                rv.setTextViewText(R.id.wDate, d.hijri);
+                if (nid != 0) {
+                    rv.setTextViewText(nid, "Seterusnya: " + nextName);
+                    rv.setTextColor(nid, p.nextName);
+                }
+                if (iid != 0) {
+                    rv.setTextViewText(iid, d.nextMs > 0 ? "pada " + hhmm(d.nextMs) + " · lagi " + shortCd(d.nextMs - now) : "");
+                    rv.setTextColor(iid, p.nextInfo);
+                }
+                if (did != 0) {
+                    rv.setTextViewText(did, d.hijri);
+                    rv.setTextColor(did, p.date);
+                }
             } else {
-                rv.setTextViewText(R.id.wNextName, "Buka app untuk muat waktu");
-                rv.setTextViewText(R.id.wNextInfo, "");
-                rv.setTextViewText(R.id.wDate, "");
+                if (nid != 0) rv.setTextViewText(nid, "Buka app untuk muat waktu");
+                if (iid != 0) rv.setTextViewText(iid, "");
+                if (did != 0) rv.setTextViewText(did, "");
             }
         } else {
             if (d.hasData) {
                 for (int i = 0; i < keys.length; i++) {
-                    applyCell(rv, ctx, i, keys, labels, d, now);
+                    applyCell(rv, ctx, i, keys, labels, d, p, now);
                 }
             } else {
                 for (int i = 0; i < keys.length; i++) {
                     int cid = ctx.getResources().getIdentifier("wC" + i, "id", ctx.getPackageName());
                     int kid = ctx.getResources().getIdentifier("wK" + i, "id", ctx.getPackageName());
-                    int tid = ctx.getResources().getIdentifier("wT" + i, "id", ctx.getPackageName());
+                    int tid2 = ctx.getResources().getIdentifier("wT" + i, "id", ctx.getPackageName());
                     rv.setTextViewText(kid, labels[i]);
-                    rv.setTextViewText(tid, "—");
+                    rv.setTextViewText(tid2, "—");
                     rv.setInt(cid, "setBackgroundResource", R.drawable.widget_cell);
-                    rv.setTextColor(kid, C_LABEL);
-                    rv.setTextColor(tid, C_TIME);
+                    rv.setTextColor(kid, p.cellLabel);
+                    rv.setTextColor(tid2, p.cellTime);
                 }
             }
-            finishRender(rv, ctx, d, now);
+            finishRender(rv, ctx, d, p, now);
         }
 
         Intent open = new Intent(ctx, MainActivity.class)
@@ -247,8 +306,6 @@ public abstract class SolatWidgetBase extends AppWidgetProvider {
 
         mgr.updateAppWidget(ids, rv);
     }
-
-    /* ------------------------------ tick ------------------------------ */
 
     public static void saveData(Context ctx, String json) {
         ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -308,8 +365,6 @@ public abstract class SolatWidgetBase extends AppWidgetProvider {
         if (pi != null) am.cancel(pi);
     }
 
-    /* ----------------------- instance callbacks ----------------------- */
-
     @Override
     public void onUpdate(Context ctx, AppWidgetManager mgr, int[] ids) {
         updateAll(ctx);
@@ -337,10 +392,7 @@ public abstract class SolatWidgetBase extends AppWidgetProvider {
         }
     }
 
-    /* --------------------------- helpers --------------------------- */
-
     public static void updateAll(Context ctx) {
-        // subclasses override
     }
 
     protected static String labelOf(String key) {

@@ -688,7 +688,7 @@
         });
       }
       window.AndroidNotif.updateWidget(JSON.stringify({
-        city: C.state.zone, days: days
+        city: C.state.zone, theme: C.state.theme, days: days
       }));
     } catch (e) {}
   }

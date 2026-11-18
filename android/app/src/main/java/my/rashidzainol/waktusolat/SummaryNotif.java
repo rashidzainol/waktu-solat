@@ -119,6 +119,7 @@ public final class SummaryNotif {
         long now = System.currentTimeMillis();
         String zone = "";
         String hijri = "";
+        String theme = "dark";
         boolean hasData = false;
         String nextKey = null;
         long nextMs = 0;
@@ -128,6 +129,7 @@ public final class SummaryNotif {
             SharedPreferences p = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
             JSONObject data = new JSONObject(p.getString(KEY_WIDGET, "{}"));
             zone = data.optString("city", "");
+            theme = data.optString("theme", "dark");
             JSONArray days = data.optJSONArray("days");
             if (days != null) {
                 String todayStr = new SimpleDateFormat("yyyy-MM-dd", Locale.US)
@@ -175,9 +177,24 @@ public final class SummaryNotif {
         } catch (Exception ignored) {
         }
 
+        // warna ikut tema
+        int cLabel, cTime, cDimLabel, cDimTime, cAccent, cZone, cDate;
+        if ("light".equals(theme)) {
+            cLabel = 0xFF52655C; cTime = 0xFF14211B; cDimLabel = 0xFF9AAEA5;
+            cDimTime = 0xFF8A9E95; cAccent = 0xFF0C8F63; cZone = 0xFF0C8F63; cDate = 0xFF52655C;
+        } else if ("minimal".equals(theme)) {
+            cLabel = 0xFF555552; cTime = 0xFF111111; cDimLabel = 0xFF9A9A96;
+            cDimTime = 0xFF8A8A86; cAccent = 0xFF111111; cZone = 0xFF111111; cDate = 0xFF555552;
+        } else {
+            cLabel = 0xFF8BA39A; cTime = 0xFFEAF3EF; cDimLabel = 0xFF63776F;
+            cDimTime = 0xFFAFC2BA; cAccent = 0xFF34D399; cZone = 0xFF34D399; cDate = 0xFF8BA39A;
+        }
+
         RemoteViews rv = new RemoteViews(ctx.getPackageName(), R.layout.notification_summary);
         rv.setTextViewText(R.id.nZone, zone.isEmpty() ? "Waktu Solat" : zone);
+        rv.setTextColor(R.id.nZone, cZone);
         rv.setTextViewText(R.id.nDate, hijri);
+        rv.setTextColor(R.id.nDate, cDate);
 
         int nextIdx = -1;
         for (int i = 0; i < KEYS.length; i++) {
@@ -195,8 +212,8 @@ public final class SummaryNotif {
 
             boolean isNext = i == nextIdx;
             boolean isPast = cellMs[i] > 0 && cellMs[i] < now;
-            rv.setTextColor(kid, isNext ? C_ACCENT : isPast ? C_DIM_LABEL : C_LABEL);
-            rv.setTextColor(tid, isNext ? C_ACCENT : isPast ? C_DIM_TIME : C_TIME);
+            rv.setTextColor(kid, isNext ? cAccent : isPast ? cDimLabel : cLabel);
+            rv.setTextColor(tid, isNext ? cAccent : isPast ? cDimTime : cTime);
         }
 
         String info;
@@ -209,7 +226,7 @@ public final class SummaryNotif {
             info = "Waktu hari ini telah tamat";
         }
         rv.setTextViewText(R.id.nNext, info);
-        rv.setTextColor(R.id.nNext, hasData ? C_ACCENT : C_LABEL);
+        rv.setTextColor(R.id.nNext, hasData ? cAccent : cLabel);
 
         Intent open = new Intent(ctx, MainActivity.class)
                 .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
