@@ -1471,6 +1471,22 @@
     if (el) el.textContent = text;
   }
 
+  function showUpdateBadge(ver) {
+    var b = $('updateBadge');
+    if (!b) return;
+    b.textContent = 'v' + ver + ' baharu';
+    b.hidden = false;
+    b.onclick = function () {
+      // buka tetapan untuk kemas kini
+      try { document.querySelector('.tab[data-view=settings]').click(); } catch (e) {}
+    };
+  }
+
+  function hideUpdateBadge() {
+    var b = $('updateBadge');
+    if (b) b.hidden = true;
+  }
+
   function checkUpdate(verbose) {
     if (updateBusy) { if (verbose) toast('Muat turun sedang berjalan'); return; }
     if (verbose) setUpdateStatus('Menyemak…');
@@ -1493,6 +1509,7 @@
           remoteUpdate = null;
           setUpdateStatus('PWA — kemas kini automatik dari web. Versi GitHub: v' + ver);
           if (verbose) toast('App web dikemas kini secara automatik');
+          hideUpdateBadge();
           return;
         }
 
@@ -1509,17 +1526,20 @@
           if ($('updateHint')) $('updateHint').hidden = !remoteUpdate.url;
           if (!remoteUpdate.url) setUpdateStatus('Versi baharu v' + ver + ' tersedia — buka GitHub untuk muat turun');
           if (verbose) toast('Versi baharu v' + ver + ' tersedia');
+          showUpdateBadge(ver);
         } else {
           remoteUpdate = null;
           $('btnDoUpdate').hidden = true;
           if ($('updateHint')) $('updateHint').hidden = true;
           setUpdateStatus('App terkini — v' + local);
           if (verbose) toast('App sudah terkini');
+          hideUpdateBadge();
         }
       })
       .catch(function (err) {
         remoteUpdate = null;
         if ($('updateHint')) $('updateHint').hidden = true;
+        hideUpdateBadge();
         if (verbose) {
           setUpdateStatus('Gagal semak kemas kini — semak internet.');
           toast('Gagal semak kemas kini', 4200);
