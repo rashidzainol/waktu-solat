@@ -134,6 +134,24 @@ Android** (pautan di bawah pilihan bunyi) dan pastikan saluran
 "Waktu Solat (nada penggera)" atau "Waktu Solat (loceng)" mempunyai bunyi
 dan tidak disekat. Kelantangan penggera Android juga mesti dinaikkan.
 
+### Notis tidak muncul di skrin (pop-up)
+
+Notifikasi tetap masuk ke bar notifikasi, tetapi sesetengah telefon
+menyembunyikan **notifikasi terapung (pop-up)** secara lalai. Di dalam app,
+buka **Tetapan → Notifikasi → "Notis tidak muncul di skrin? Benarkan pop-up"**
+untuk panduan. Ringkasnya:
+
+| Peranti | Laluan |
+|---------|--------|
+| Xiaomi / Redmi (HyperOS, MIUI) | Tetapan → App → Waktu Solat → Notifikasi → **Notifikasi terapung** |
+| Samsung (One UI) | Tetapan → Notifikasi → Tetapan lanjutan → **Notifikasi pop-up** → Semua app |
+| OPPO / Realme / OnePlus | Tetapan → Notifikasi & bar status → Waktu Solat → **Notifikasi terapung** |
+| vivo / iQOO | Tetapan → Notifikasi → Waktu Solat → **Notifikasi terapung** |
+| Huawei / Honor | Tetapan → Notifikasi → Waktu Solat → **Notifikasi terapung** |
+| Android biasa (Pixel dll.) | Tetapan → App → Waktu Solat → Notifikasi → saluran mesti **Urgent** + bunyi aktif |
+
+Selepas dibenarkan, tekan **Uji notifikasi** untuk semak.
+
 ---
 
 ## Takwim Hijri

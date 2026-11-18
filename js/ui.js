@@ -531,6 +531,7 @@
       if ($('notifSoundRow')) $('notifSoundRow').hidden = true;
       if ($('soundChips')) $('soundChips').hidden = true;
       if ($('soundLinkRow')) $('soundLinkRow').hidden = true;
+      if ($('popupGuide')) { $('popupGuide').hidden = true; $('popupGuide').open = false; }
       if (permBtn) permBtn.hidden = true;
       if (testBtn) testBtn.hidden = true;
       updateBell();
@@ -543,6 +544,10 @@
     if ($('notifSoundRow')) $('notifSoundRow').hidden = !st.notify;
     if ($('soundChips')) $('soundChips').hidden = !st.notify;
     if ($('soundLinkRow')) $('soundLinkRow').hidden = !st.notify;
+    if ($('popupGuide')) {
+      $('popupGuide').hidden = !st.notify;
+      if (!st.notify) $('popupGuide').open = false;
+    }
 
     // Pilihan bunyi: cip ikut pilihan yang disimpan di bahagian Android.
     var soundChips = $('soundChips');
@@ -1231,6 +1236,17 @@
       }
       try { A.openSoundSettings(); } catch (e) {
         toast('Tidak dapat membuka tetapan bunyi');
+      }
+    });
+
+    $('btnGuideSettings').addEventListener('click', function () {
+      var A = nativeNotif();
+      if (!A || typeof A.openSettings !== 'function') {
+        toast('Tetapan notifikasi hanya tersedia dalam app Android');
+        return;
+      }
+      try { A.openSettings(); } catch (e) {
+        toast('Tidak dapat membuka tetapan notifikasi');
       }
     });
 
