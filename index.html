@@ -30,6 +30,13 @@
 <div class="app">
 
   <header class="topbar">
+    <button class="iconbtn" id="btnMenu" aria-label="Menu" title="Menu panduan & info">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="3" y1="6" x2="21" y2="6"/>
+        <line x1="3" y1="12" x2="21" y2="12"/>
+        <line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+    </button>
     <div class="brand" id="brand">
       <div class="logo" aria-hidden="true">
         <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -421,6 +428,53 @@
     </div>
   </nav>
 
+</div>
+
+<div class="drawer-backdrop" id="drawerBackdrop" hidden></div>
+<div class="drawer" id="drawer" hidden aria-hidden="true">
+  <div class="drawer-head">
+    <div class="drawer-title">Panduan Ibadah</div>
+    <button class="iconbtn" id="btnDrawerClose" aria-label="Tutup menu">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"/>
+        <line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+  </div>
+  <div class="drawer-body">
+    <details class="drawer-sec" open>
+      <summary>Zikir selepas solat (33×)</summary>
+      <div class="drawer-content">
+        <p><b>Subhanallah</b> 33 kali</p>
+        <p><b>Alhamdulillah</b> 33 kali</p>
+        <p><b>Allahu Akbar</b> 33 kali</p>
+        <p class="note">Kemudian sempurnakan 100 dengan: <i>La ilaha illallah wahdahu la sharika lahu, lahul-mulku wa lahul-hamdu, wa huwa 'ala kulli shay'in qadir.</i></p>
+      </div>
+    </details>
+    <details class="drawer-sec">
+      <summary>Ayat Kursi (selepas solat)</summary>
+      <div class="drawer-content">
+        <p class="arab">اللَّهُ لاَ إِلَهَ إِلاَّ هُوَ الْحَيُّ الْقَيُّومُ ۚ لاَ تَأْخُذُهُ سِنَةٌ وَلاَ نَوْمٌ ۚ لَهُ مَا فِي السَّمَاوَاتِ وَمَا فِي الْأَرْضِ ۗ مَنْ ذَا الَّذِي يَشْفَعُ عِنْدَهُ إِلَّا بِإِذْنِهِ ۚ يَعْلَمُ مَا بَيْنَ أَيْدِيهِمْ وَمَا خَلْفَهُمْ ۖ وَلاَ يُحِيطُونَ بِشَيْءٍ مِنْ عِلْمِهِ إِلَّا بِمَا شَاءَ ۚ وَسِعَ كُرْسِيُّهُ السَّمَاوَاتِ وَالْأَرْضَ ۖ وَلاَ يَئُودُهُ حِفْظُهُمَا ۚ وَهُوَ الْعَلِيُّ الْعَظِيمُ</p>
+        <p class="note">Dibaca selepas setiap solat fardu. (Rujukan: AkuIslam)</p>
+      </div>
+    </details>
+    <details class="drawer-sec">
+      <summary>Doa selepas solat</summary>
+      <div class="drawer-content">
+        <p><b>Astaghfirullah</b> × 3</p>
+        <p><i>Allahumma antas-salam wa minkas-salam, tabarakta ya dhal-jalali wal-ikram.</i></p>
+        <p class="note">Doa penutup solat (salam). (Rujukan: AkuIslam)</p>
+      </div>
+    </details>
+    <details class="drawer-sec">
+      <summary>Info app</summary>
+      <div class="drawer-content">
+        <p>Waktu solat: data rasmi JAKIM (e-Solat), 60 zon.</p>
+        <p>Kiblat: GPS + sensor kompas.</p>
+        <p>Sumber: <a href="https://akuislam.com/blog/ibadah/wirid-doa-selepas-solat/" target="_blank" rel="noopener">akuislam.com</a></p>
+      </div>
+    </details>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>

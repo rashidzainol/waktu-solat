@@ -948,7 +948,16 @@
     pushWidget();
   }
 
-  /* -------------------------------------------------------------- views */
+  function openDrawer() {
+    var d = $('drawer'), b = $('drawerBackdrop');
+    if (d) { d.hidden = false; d.setAttribute('aria-hidden', 'false'); }
+    if (b) b.hidden = false;
+  }
+  function closeDrawer() {
+    var d = $('drawer'), b = $('drawerBackdrop');
+    if (d) { d.hidden = true; d.setAttribute('aria-hidden', 'true'); }
+    if (b) b.hidden = true;
+  }
 
   function showView(name, viaPop) {
     if (name === 'clock') {
@@ -1094,6 +1103,15 @@
 
   function wire() {
     $('btnClock').addEventListener('click', function () { showView('clock'); });
+
+    // ---- drawer menu
+    if ($('btnMenu')) $('btnMenu').addEventListener('click', openDrawer);
+    if ($('btnDrawerClose')) $('btnDrawerClose').addEventListener('click', closeDrawer);
+    if ($('drawerBackdrop')) $('drawerBackdrop').addEventListener('click', closeDrawer);
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeDrawer();
+    });
 
 
     // Butang Back remote TV / peranti: dari Mod Jam kembali ke Waktu Solat.
