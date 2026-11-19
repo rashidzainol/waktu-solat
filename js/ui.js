@@ -1151,22 +1151,13 @@
   function wire() {
     $('btnClock').addEventListener('click', function () { showView('clock'); });
 
-    // ---- drawer menu
-    if ($('btnMenu')) $('btnMenu').addEventListener('click', openDrawer);
-    if ($('btnDrawerClose')) $('btnDrawerClose').addEventListener('click', closeDrawer);
-    if ($('drawerBackdrop')) $('drawerBackdrop').addEventListener('click', closeDrawer);
-
-    // ---- pautan panduan dalam drawer
-    Array.prototype.forEach.call(document.querySelectorAll('.drawer-link'), function (b) {
+    // ---- pautan panduan dalam tetapan
+    Array.prototype.forEach.call(document.querySelectorAll('button[data-guide]'), function (b) {
       b.addEventListener('click', function () {
         openGuide(b.dataset.guide);
       });
     });
     if ($('btnGuideBack')) $('btnGuideBack').addEventListener('click', function () { showView('clock'); });
-
-    document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape') closeDrawer();
-    });
 
 
     // Butang Back remote TV / peranti: dari Mod Jam kembali ke Waktu Solat.
