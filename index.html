@@ -176,8 +176,16 @@
       <p class="note" id="qiblaNote"></p>
     </section>
 
-    <!-- ================= TETAPAN ================= -->
-    <section class="view" id="view-settings">
+    <!-- ================= PANDUAN (mini web) ================= -->
+    <section class="view" id="view-guide">
+      <div class="guide-topbar">
+        <button class="btn ghost" id="btnGuideBack">← Kembali</button>
+        <div class="guide-title" id="guideTitle">Panduan</div>
+      </div>
+      <div class="card guide-card">
+        <div class="guide-content" id="guideContent"></div>
+      </div>
+    </section>
 
       <div class="shead">Zon JAKIM</div>
       <div class="card scard" id="zoneCard">
@@ -442,38 +450,19 @@
     </button>
   </div>
   <div class="drawer-body">
-    <details class="drawer-sec" open>
-      <summary>Zikir selepas solat (33×)</summary>
-      <div class="drawer-content">
-        <p><b>Subhanallah</b> 33 kali</p>
-        <p><b>Alhamdulillah</b> 33 kali</p>
-        <p><b>Allahu Akbar</b> 33 kali</p>
-        <p class="note">Kemudian sempurnakan 100 dengan: <i>La ilaha illallah wahdahu la sharika lahu, lahul-mulku wa lahul-hamdu, wa huwa 'ala kulli shay'in qadir.</i></p>
-      </div>
-    </details>
-    <details class="drawer-sec">
-      <summary>Ayat Kursi (selepas solat)</summary>
-      <div class="drawer-content">
-        <p class="arab">اللَّهُ لاَ إِلَهَ إِلاَّ هُوَ الْحَيُّ الْقَيُّومُ ۚ لاَ تَأْخُذُهُ سِنَةٌ وَلاَ نَوْمٌ ۚ لَهُ مَا فِي السَّمَاوَاتِ وَمَا فِي الْأَرْضِ ۗ مَنْ ذَا الَّذِي يَشْفَعُ عِنْدَهُ إِلَّا بِإِذْنِهِ ۚ يَعْلَمُ مَا بَيْنَ أَيْدِيهِمْ وَمَا خَلْفَهُمْ ۖ وَلاَ يُحِيطُونَ بِشَيْءٍ مِنْ عِلْمِهِ إِلَّا بِمَا شَاءَ ۚ وَسِعَ كُرْسِيُّهُ السَّمَاوَاتِ وَالْأَرْضَ ۖ وَلاَ يَئُودُهُ حِفْظُهُمَا ۚ وَهُوَ الْعَلِيُّ الْعَظِيمُ</p>
-        <p class="note">Dibaca selepas setiap solat fardu. (Rujukan: AkuIslam)</p>
-      </div>
-    </details>
-    <details class="drawer-sec">
-      <summary>Doa selepas solat</summary>
-      <div class="drawer-content">
-        <p><b>Astaghfirullah</b> × 3</p>
-        <p><i>Allahumma antas-salam wa minkas-salam, tabarakta ya dhal-jalali wal-ikram.</i></p>
-        <p class="note">Doa penutup solat (salam). (Rujukan: AkuIslam)</p>
-      </div>
-    </details>
-    <details class="drawer-sec">
-      <summary>Info app</summary>
-      <div class="drawer-content">
-        <p>Waktu solat: data rasmi JAKIM (e-Solat), 60 zon.</p>
-        <p>Kiblat: GPS + sensor kompas.</p>
-        <p>Sumber: <a href="https://akuislam.com/blog/ibadah/wirid-doa-selepas-solat/" target="_blank" rel="noopener">akuislam.com</a></p>
-      </div>
-    </details>
+    <div class="drawer-group">
+      <div class="drawer-group-title">Panduan Ibadah</div>
+      <button class="drawer-link" data-guide="zikir">Zikir selepas solat (33×)</button>
+      <button class="drawer-link" data-guide="ayatkursi">Ayat Kursi</button>
+      <button class="drawer-link" data-guide="doaselepas">Doa selepas solat</button>
+    </div>
+    <div class="drawer-group">
+      <div class="drawer-group-title">Info</div>
+      <button class="drawer-link" data-guide="info">Tentang app & sumber data</button>
+    </div>
+    <div class="drawer-foot">
+      <a href="https://akuislam.com/blog/ibadah/wirid-doa-selepas-solat/" target="_blank" rel="noopener noreferrer">Rujukan: AkuIslam</a>
+    </div>
   </div>
 </div>
 
@@ -482,6 +471,6 @@
 <script src="js/jakim-data.js"></script>
 <script src="js/core.js"></script>
 <script src="js/compass.js"></script>
-<script src="js/ui.js"></script>
+<script src="js/ui.js?v=25"></script>
 </body>
 </html>

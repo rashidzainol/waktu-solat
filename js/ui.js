@@ -959,6 +959,52 @@
     if (b) b.hidden = true;
   }
 
+  function openGuide(key) {
+    var g = GUIDES[key];
+    if (!g) return;
+    closeDrawer();
+    var t = $('guideTitle'), c = $('guideContent');
+    if (t) t.textContent = g.title;
+    if (c) c.innerHTML = g.body;
+    showView('guide');
+  }
+
+  var GUIDES = {
+    zikir: {
+      title: 'Zikir selepas solat (33×)',
+      body: '<h3>Zikir selepas solat</h3>' +
+        '<p><b>Subhanallah</b> — 33 kali</p>' +
+        '<p><b>Alhamdulillah</b> — 33 kali</p>' +
+        '<p><b>Allahu Akbar</b> — 33 kali</p>' +
+        '<p>Kemudian sempurnakan 100 dengan:</p>' +
+        '<p><i>La ilaha illallah wahdahu la sharika lahu, lahul-mulku wa lahul-hamdu, wa huwa \'ala kulli shay\'in qadir.</i></p>' +
+        '<p class="note">Rujukan: AkuIslam — wirid & doa selepas solat.</p>'
+    },
+    ayatkursi: {
+      title: 'Ayat Kursi (selepas solat)',
+      body: '<h3>Ayat Kursi</h3>' +
+        '<p class="arab">اللَّهُ لاَ إِلَهَ إِلاَّ هُوَ الْحَيُّ الْقَيُّومُ ۚ لاَ تَأْخُذُهُ سِنَةٌ وَلاَ نَوْمٌ ۚ لَهُ مَا فِي السَّمَاوَاتِ وَمَا فِي الْأَرْضِ ۗ مَنْ ذَا الَّذِي يَشْفَعُ عِنْدَهُ إِلَّا بِإِذْنِهِ ۚ يَعْلَمُ مَا بَيْنَ أَيْدِيهِمْ وَمَا خَلْفَهُمْ ۖ وَلاَ يُحِيطُونَ بِشَيْءٍ مِنْ عِلْمِهِ إِلَّا بِمَا شَاءَ ۚ وَسِعَ كُرْسِيُّهُ السَّمَاوَاتِ وَالْأَرْضَ ۖ وَلاَ يَئُودُهُ حِفْظُهُمَا ۚ وَهُوَ الْعَلِيُّ الْعَظِيمُ</p>' +
+        '<p>Dibaca selepas setiap solat fardu.</p>' +
+        '<p class="note">Rujukan: AkuIslam — wirid & doa selepas solat.</p>'
+    },
+    doaselepas: {
+      title: 'Doa selepas solat',
+      body: '<h3>Doa selepas solat</h3>' +
+        '<p><b>Astaghfirullah</b> — 3 kali</p>' +
+        '<p><i>Allahumma antas-salam wa minkas-salam, tabarakta ya dhal-jalali wal-ikram.</i></p>' +
+        '<p>Doa penutup solat (salam).</p>' +
+        '<p class="note">Rujukan: AkuIslam — wirid & doa selepas solat.</p>'
+    },
+    info: {
+      title: 'Tentang app & sumber data',
+      body: '<h3>Tentang app</h3>' +
+        '<p>Waktu solat: data rasmi JAKIM (e-Solat), 60 zon.</p>' +
+        '<p>Kiblat: GPS + sensor kompas.</p>' +
+        '<p>Widget homescreen: 3 varian (Penuh, Ringkas, Simpel).</p>' +
+        '<p>Sumber doa/wirid: <a href="https://akuislam.com/blog/ibadah/wirid-doa-selepas-solat/" target="_blank" rel="noopener">akuislam.com</a></p>'
+    }
+  };
+
   function showView(name, viaPop) {
     if (name === 'clock') {
       if (!pushedClock && !viaPop) {
@@ -967,8 +1013,9 @@
       pushedClock = true;
     }
     currentView = name;
-    ['clock', 'qibla', 'settings'].forEach(function (v) {
-      $('view-' + v).classList.toggle('active', v === name);
+    ['clock', 'qibla', 'settings', 'guide'].forEach(function (v) {
+      var ve = $('view-' + v);
+      if (ve) ve.classList.toggle('active', v === name);
     });
     Array.prototype.forEach.call(document.querySelectorAll('.tab'), function (t) {
       t.classList.toggle('on', t.dataset.view === name);
@@ -1108,6 +1155,14 @@
     if ($('btnMenu')) $('btnMenu').addEventListener('click', openDrawer);
     if ($('btnDrawerClose')) $('btnDrawerClose').addEventListener('click', closeDrawer);
     if ($('drawerBackdrop')) $('drawerBackdrop').addEventListener('click', closeDrawer);
+
+    // ---- pautan panduan dalam drawer
+    Array.prototype.forEach.call(document.querySelectorAll('.drawer-link'), function (b) {
+      b.addEventListener('click', function () {
+        openGuide(b.dataset.guide);
+      });
+    });
+    if ($('btnGuideBack')) $('btnGuideBack').addEventListener('click', function () { showView('clock'); });
 
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') closeDrawer();
