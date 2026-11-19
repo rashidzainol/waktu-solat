@@ -277,8 +277,8 @@ main{flex:1;padding:16px 16px calc(120px + var(--safe-b))}
   display:inline-flex;align-items:center;gap:6px;align-self:flex-start;
   margin-top:7px;padding:3px 9px;border-radius:999px;
   border:1px solid var(--line);background:var(--soft-2);
-  font-size:10.5px;color:var(--muted);max-width:100%;overflow:hidden;
-  white-space:nowrap;text-overflow:ellipsis
+  font-size:10.5px;color:var(--muted);max-width:100%;
+  white-space:normal;word-break:break-word;line-height:1.25;overflow:visible
 }
 .zone-chip .pulse{width:6px;height:6px;border-radius:50%;background:var(--accent);flex:none;box-shadow:0 0 0 3px var(--accent-glow)}
 

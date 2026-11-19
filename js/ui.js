@@ -1606,6 +1606,7 @@
     var startView = 'clock';
     showView(startView);
     renderTimes(new Date());
+    renderClock(new Date(), true);
     renderQibla();
     setInterval(tick, 1000);
     tick();
