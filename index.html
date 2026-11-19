@@ -193,18 +193,29 @@
         <button class="btn ghost" id="btnZikirBack">← Kembali</button>
         <div class="zikir-title">Zikir Selepas Solat</div>
       </div>
-      <div class="zikir-stage">
-        <div class="zikir-progress">
-          <span class="zp" id="zp0">Subhanallah</span>
-          <span class="zp" id="zp1">Alhamdulillah</span>
-          <span class="zp" id="zp2">Allahu Akbar</span>
+
+      <div class="zikir-stage" id="zikirStage">
+        <div class="zikir-phasebar">
+          <div class="zp" id="zp0">Subhanallah</div>
+          <div class="zp" id="zp1">Alhamdulillah</div>
+          <div class="zp" id="zp2">Allahu Akbar</div>
         </div>
-        <div class="zikir-name" id="zikirName">Subhanallah</div>
-        <div class="zikir-count num" id="zikirCount">0</div>
-        <div class="zikir-target" id="zikirTarget">/ 33</div>
-        <button class="zikir-tap" id="zikirTap" aria-label="Tap untuk zikir">TAP</button>
-        <div class="zikir-hint" id="zikirHint">Ketuk untuk mengira</div>
+
+        <div class="zikir-card" id="zikirCard">
+          <div class="zikir-name" id="zikirName">Subhanallah</div>
+          <div class="zikir-ring">
+            <svg viewBox="0 0 120 120" class="zikir-ring-svg">
+              <circle class="zr-track" cx="60" cy="60" r="52"/>
+              <circle class="zr-fill" id="zrFill" cx="60" cy="60" r="52" transform="rotate(-90 60 60)"/>
+            </svg>
+            <div class="zikir-count num" id="zikirCount">0</div>
+          </div>
+          <div class="zikir-target" id="zikirTarget">/ 33</div>
+          <button class="zikir-tap" id="zikirTap" aria-label="Tap untuk zikir">KETUK</button>
+          <div class="zikir-hint" id="zikirHint">Ketuk untuk mengira</div>
+        </div>
       </div>
+
       <div class="zikir-overlay" id="zikirOverlay" hidden>
         <div class="zikir-overlay-box">
           <div class="zikir-overlay-title">Sempurnakan zikir</div>
@@ -214,7 +225,7 @@
       </div>
       <div class="zikir-done" id="zikirDone" hidden>
         <div class="zikir-done-box">
-          <div class="zikir-done-title">Zikir selesai</div>
+          <div class="zikir-done-title">🎉 Zikir selesai</div>
           <p>Semoga diterima. Amin.</p>
           <button class="btn primary" id="zikirReset">Ulang</button>
           <button class="btn ghost" id="zikirBack2">Kembali</button>

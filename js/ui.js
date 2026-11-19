@@ -976,6 +976,7 @@
   function renderZikir() {
     var nameEl = $('zikirName'), countEl = $('zikirCount'), hint = $('zikirHint');
     var tap = $('zikirTap');
+    var ring = $('zrFill');
     for (var i = 0; i < 3; i++) {
       var zp = $('zp' + i);
       if (zp) zp.classList.toggle('done', i < zikirPhase);
@@ -984,7 +985,11 @@
       if (nameEl) nameEl.textContent = ZIKIR_PHASES[zikirPhase];
       if (countEl) countEl.textContent = zikirCount;
       if (hint) hint.textContent = 'Ketuk untuk mengira (' + zikirCount + '/33)';
-      if (tap) tap.textContent = zikirCount === 0 ? 'MULA' : zikirCount;
+      if (tap) tap.textContent = (zikirCount === 0) ? 'MULA' : zikirCount;
+      if (ring) {
+        var pct = zikirCount / 33;
+        ring.style.strokeDashoffset = (327 * (1 - pct)).toFixed(1);
+      }
     }
   }
 
