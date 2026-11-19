@@ -1467,7 +1467,7 @@
 
   function checkUpdate(verbose) {
     if (updateBusy) { if (verbose) toast('Muat turun sedang berjalan'); return; }
-    if (verbose) setUpdateStatus('Menyemak…');
+    if (verbose) (function(t){var _e=$('updateStatus');if(_e)_e.textContent=t;})('Menyemak…');
 
     fetch('https://api.github.com/repos/rashidzainol/waktu-solat/releases/latest')
       .then(function (r) {
@@ -1485,7 +1485,7 @@
         if (!local) {
           // Pelayar/PWA: kemas kini melalui service worker.
           remoteUpdate = null;
-          setUpdateStatus('PWA — kemas kini automatik dari web. Versi GitHub: v' + ver);
+          (function(t){var _e=$('updateStatus');if(_e)_e.textContent=t;})('PWA — kemas kini automatik dari web. Versi GitHub: v' + ver);
           if (verbose) toast('App web dikemas kini secara automatik');
           hideUpdateBadge();
           return;
@@ -1493,23 +1493,23 @@
 
         if (!ver) {
           remoteUpdate = null;
-          setUpdateStatus('Tidak dapat baca versi GitHub.');
+          (function(t){var _e=$('updateStatus');if(_e)_e.textContent=t;})('Tidak dapat baca versi GitHub.');
           return;
         }
 
         if (cmpVer(ver, local) > 0) {
           remoteUpdate = { version: ver, url: asset ? asset.browser_download_url : null };
-          setUpdateStatus('Versi baharu v' + ver + ' tersedia (versi anda v' + local + ')');
+          (function(t){var _e=$('updateStatus');if(_e)_e.textContent=t;})('Versi baharu v' + ver + ' tersedia (versi anda v' + local + ')');
           $('btnDoUpdate').hidden = !remoteUpdate.url;
           if ($('updateHint')) $('updateHint').hidden = !remoteUpdate.url;
-          if (!remoteUpdate.url) setUpdateStatus('Versi baharu v' + ver + ' tersedia — buka GitHub untuk muat turun');
+          if (!remoteUpdate.url) (function(t){var _e=$('updateStatus');if(_e)_e.textContent=t;})('Versi baharu v' + ver + ' tersedia — buka GitHub untuk muat turun');
           if (verbose) toast('Versi baharu v' + ver + ' tersedia');
           showUpdateBadge(ver);
         } else {
           remoteUpdate = null;
           $('btnDoUpdate').hidden = true;
           if ($('updateHint')) $('updateHint').hidden = true;
-          setUpdateStatus('App terkini — v' + local);
+          (function(t){var _e=$('updateStatus');if(_e)_e.textContent=t;})('App terkini — v' + local);
           if (verbose) toast('App sudah terkini');
           hideUpdateBadge();
         }
@@ -1519,10 +1519,10 @@
         if ($('updateHint')) $('updateHint').hidden = true;
         hideUpdateBadge();
         if (verbose) {
-          setUpdateStatus('Gagal semak kemas kini — semak internet.');
+          (function(t){var _e=$('updateStatus');if(_e)_e.textContent=t;})('Gagal semak kemas kini — semak internet.');
           toast('Gagal semak kemas kini', 4200);
         } else {
-          setUpdateStatus('Versi app');
+          (function(t){var _e=$('updateStatus');if(_e)_e.textContent=t;})('Versi app');
         }
       });
   }
@@ -1536,12 +1536,12 @@
         toast('Muat semula halaman untuk kemas kini');
         return;
       }
-      setUpdateStatus('Memuat kemas kini web…');
+      (function(t){var _e=$('updateStatus');if(_e)_e.textContent=t;})('Memuat kemas kini web…');
       navigator.serviceWorker.getRegistrations().then(function (regs) {
         var p = Promise.all(regs.map(function (r) { return r.update(); }));
         return p.catch(function () {});
       }).then(function () {
-        setUpdateStatus('Kemas kini web siap — muat semula…');
+        (function(t){var _e=$('updateStatus');if(_e)_e.textContent=t;})('Kemas kini web siap — muat semula…');
         setTimeout(function () { location.reload(); }, 600);
       });
       return;
@@ -1552,21 +1552,21 @@
     if (updateBusy) return;
     updateBusy = true;
     $('btnDoUpdate').disabled = true;
-    setUpdateStatus('Memuat turun v' + remoteUpdate.version + '… 0%');
+    (function(t){var _e=$('updateStatus');if(_e)_e.textContent=t;})('Memuat turun v' + remoteUpdate.version + '… 0%');
 
     window.__updateProgress = function (pct) {
-      setUpdateStatus('Memuat turun v' + (remoteUpdate ? remoteUpdate.version : '') + '… ' + pct + '%');
+      (function(t){var _e=$('updateStatus');if(_e)_e.textContent=t;})('Memuat turun v' + (remoteUpdate ? remoteUpdate.version : '') + '… ' + pct + '%');
     };
     window.__updateDone = function (ok) {
       updateBusy = false;
       $('btnDoUpdate').disabled = false;
       if (ok) {
-        setUpdateStatus('Pemasangan dimulakan — ikut arahan Android.');
+        (function(t){var _e=$('updateStatus');if(_e)_e.textContent=t;})('Pemasangan dimulakan — ikut arahan Android.');
         toast('Sila benarkan pemasangan apabila Android bertanya', 6000);
       }
     };
     window.__updateError = function (msg) {
-      setUpdateStatus('Gagal: ' + msg);
+      (function(t){var _e=$('updateStatus');if(_e)_e.textContent=t;})('Gagal: ' + msg);
       toast('Muat turun gagal', 4200);
     };
 
@@ -1575,7 +1575,7 @@
     } catch (e) {
       updateBusy = false;
       $('btnDoUpdate').disabled = false;
-      setUpdateStatus('Gagal memulakan muat turun.');
+      (function(t){var _e=$('updateStatus');if(_e)_e.textContent=t;})('Gagal memulakan muat turun.');
     }
   }
 
@@ -1600,7 +1600,7 @@
     wire();
 
     var lv = localVersion();
-    if (lv) setUpdateStatus('Versi ' + lv + ' — menyemak…');
+    if (lv) (function(t){var _e=$('updateStatus');if(_e)_e.textContent=t;})('Versi ' + lv + ' — menyemak…');
 
     lastDateStr = new Date().toDateString();
     var startView = 'clock';
