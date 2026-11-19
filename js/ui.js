@@ -959,6 +959,58 @@
     if (b) b.hidden = true;
   }
 
+  var ZIKIR_PHASES = ['Subhanallah', 'Alhamdulillah', 'Allahu Akbar'];
+  var zikirPhase = 0;
+  var zikirCount = 0;
+
+  function openZikir() {
+    zikirPhase = 0;
+    zikirCount = 0;
+    renderZikir();
+    var ov = $('zikirOverlay'), dn = $('zikirDone');
+    if (ov) ov.hidden = true;
+    if (dn) dn.hidden = true;
+    showView('zikir');
+  }
+
+  function renderZikir() {
+    var nameEl = $('zikirName'), countEl = $('zikirCount'), hint = $('zikirHint');
+    var tap = $('zikirTap');
+    for (var i = 0; i < 3; i++) {
+      var zp = $('zp' + i);
+      if (zp) zp.classList.toggle('done', i < zikirPhase);
+    }
+    if (zikirPhase < 3) {
+      if (nameEl) nameEl.textContent = ZIKIR_PHASES[zikirPhase];
+      if (countEl) countEl.textContent = zikirCount;
+      if (hint) hint.textContent = 'Ketuk untuk mengira (' + zikirCount + '/33)';
+      if (tap) tap.textContent = zikirCount === 0 ? 'MULA' : zikirCount;
+    }
+  }
+
+  function zikirTap() {
+    if (zikirPhase >= 3) return;
+    zikirCount++;
+    if (navigator.vibrate) { try { navigator.vibrate(30); } catch (e) {} }
+    if (zikirCount >= 33) {
+      zikirCount = 33;
+      renderZikir();
+      // highlight done
+      var zp = $('zp' + zikirPhase);
+      if (zp) zp.classList.add('done');
+      zikirPhase++;
+      zikirCount = 0;
+      if (zikirPhase >= 3) {
+        // show completion overlay
+        var ov = $('zikirOverlay');
+        if (ov) ov.hidden = false;
+      } else {
+        renderZikir();
+      }
+    } else {
+      renderZikir();
+    }
+  }
   function openGuide(key) {
     var g = GUIDES[key];
     if (!g) return;
@@ -967,6 +1019,9 @@
     if (t) t.textContent = g.title;
     if (c) c.innerHTML = g.body;
     showView('guide');
+    // wire start zikir button if present
+    var sb = $('btnStartZikir');
+    if (sb) sb.addEventListener('click', function () { openZikir(); });
   }
 
   var GUIDES = {
@@ -978,7 +1033,8 @@
         '<p><b>Allahu Akbar</b> — 33 kali</p>' +
         '<p>Kemudian sempurnakan 100 dengan:</p>' +
         '<p><i>La ilaha illallah wahdahu la sharika lahu, lahul-mulku wa lahul-hamdu, wa huwa \'ala kulli shay\'in qadir.</i></p>' +
-        '<p class="note">Rujukan: AkuIslam — wirid & doa selepas solat.</p>'
+        '<p class="note">Rujukan: AkuIslam — wirid & doa selepas solat.</p>' +
+        '<button class="btn primary" id="btnStartZikir" style="margin-top:10px">Mula zikir interaktif</button>'
     },
     ayatkursi: {
       title: 'Ayat Kursi (selepas solat)',
@@ -1013,7 +1069,7 @@
       pushedClock = true;
     }
     currentView = name;
-    ['clock', 'qibla', 'settings', 'guide'].forEach(function (v) {
+    ['clock', 'qibla', 'settings', 'guide', 'zikir'].forEach(function (v) {
       var ve = $('view-' + v);
       if (ve) ve.classList.toggle('active', v === name);
     });
@@ -1163,6 +1219,16 @@
       });
     });
     if ($('btnGuideBack')) $('btnGuideBack').addEventListener('click', function () { showView('clock'); });
+
+    // zikir interaktif
+    if ($('btnZikirBack')) $('btnZikirBack').addEventListener('click', function () { showView('guide'); });
+    if ($('zikirTap')) $('zikirTap').addEventListener('click', zikirTap);
+    if ($('zikirFinish')) $('zikirFinish').addEventListener('click', function () {
+      var ov = $('zikirOverlay'); if (ov) ov.hidden = true;
+      var dn = $('zikirDone'); if (dn) dn.hidden = false;
+    });
+    if ($('zikirReset')) $('zikirReset').addEventListener('click', openZikir);
+    if ($('zikirBack2')) $('zikirBack2').addEventListener('click', function () { showView('guide'); });
 
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') closeDrawer();
